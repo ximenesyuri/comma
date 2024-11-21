@@ -1,0 +1,11 @@
+ABOUT
+    A fzf-based Bash function to easily manage issues in Gitea instances.
+
+INSTALL
+    Just source the issue/issue file in your .bashrc file.
+
+DEPENDENCES
+    - fzf
+    - tea (be sure to be authenticated before using the issue function)
+
+

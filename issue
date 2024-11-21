@@ -85,8 +85,15 @@ EOF
             if [[ -n "${selection}" ]]; then
                 local issue_id
                 issue_id=$(echo "${selection}" | awk '{print $1}')
-                tea issues "${action}" --repo "${repo}" "${issue_id}" | sed -n '/no gitea login detected/!p' | sed 's/# //g'
-                echo "Issue ${issue_id} ${action}ed."
+                if [[ "$action" == "list" ]]; then
+                    tea issues --comments --repo "${repo}" "${issue_id}" | sed -n '/no gitea login detected/!p' | sed 's/# //g' | sed -e '/^  #Comments/i---------------------------------'  | sed -e '/^$/d' | sed 's/^/  /' | sed 's/**//g' 
+                else
+                    tea issues "${action}" --repo "${repo}" "${issue_id}" | sed -n '/no gitea login detected/!p' | sed 's/# //g' | sed -e '/^$/d'
+                    if [[ ! "$?" == "0" ]]; then
+                        return 1
+                    fi
+                    echo "Issue ${issue_id} has been ${action}ed."
+                fi
             else
                 echo "No issue selected."
             fi
@@ -136,24 +143,20 @@ EOF
             fi
         done
 
-        echo "Enter kind/severity (format: kind/severity):"
+        echo "Enter kind/severity:"
         while true; do
             read -e -r -p "> " kind_severity
-            if [[ "$kind_severity" == */* ]]; then
-                IFS='/' read -r kind severity <<< "$kind_severity"
-                if [[ -n "$kind" ]]; then
-                    break
-                else
-                    echo "Both kind and severity must be specified. Please try again."
-                fi
+            IFS='/' read -r kind severity <<< "$kind_severity"
+            if [[ -n "$kind" ]]; then
+                break
             else
-                echo "Input must be in the form 'kind/severity'. Please try again."
-            fi
+                echo "At least kind must be provided."
+            fi 
         done
     
-        tea issues create --repo "${repo}" --title "${org_version}: ${title}" --description "${description}" --labels "kind/$kind,${severity}" | sed -n '/no gitea login detected/!p' | sed 's/# //g'
+        tea issues create --repo "${repo}" --title "${org_version}: ${title}" --description "${description}" --labels "kind/$kind,${severity}" | sed -n '/no gitea login detected/!p' | sed 's/# //g' | sed -e '/^$/d'
 
-        echo "Issue created."
+        echo "ok: The issue has been created."
     }
 
     check_dependencies || return 1
@@ -206,34 +209,35 @@ EOF
             local filter_type=$(validate_filter_type "$1")
             local filter_value="$2"
 
-            if [[ -z "$filter_type" || -z "$filter_value" ]]; then
-                echo "error: Invalid filter-type or missing filter value."
+            if ! [[ -z "$filter_type" || -z "$filter_value" ]]; then
+                manage_issues "close" "${repo}" "open" "${filter_type}" "${filter_value}"
+            else
+                manage_issues "close" "${repo}" "open"
                 return 1
             fi
 
-            manage_issues "close" "${repo}" "open" "${filter_type}" "${filter_value}"
+            
             ;;
         open|o)
             shift
             local filter_type=$(validate_filter_type "$1")
             local filter_value="$2"
-
-            if [[ -z "$filter_type" || -z "$filter_value" ]]; then
-                echo "error: Invalid filter-type or missing filter value."
+            if ! [[ -z "$filter_type" || -z "$filter_value" ]]; then
+                manage_issues "open" "${repo}" "closed" "${filter_type}" "${filter_value}"
+            else
+                manage_issues "open" "${repo}" "closed"
                 return 1
             fi
-
-            manage_issues "open" "${repo}" "closed" "${filter_type}" "${filter_value}"
             ;;
         list|ls)
             shift
             local filter_type=$(validate_filter_type "$1")
             local filter_value="$2"
 
-            if [[ -z "$filter_type" || -z "$filter_value" ]]; then
-                manage_issues "" "${repo}" "all"
+            if ! [[ -z "$filter_type" || -z "$filter_value" ]]; then
+                manage_issues "list" "${repo}" "" "${filter_type}" "${filter_value}"
             else
-                manage_issues "" "${repo}" "all" "${filter_type}" "${filter_value}"
+                manage_issues "list" "${repo}"                
             fi            
             ;;
         repos)
