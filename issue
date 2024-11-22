@@ -1,6 +1,12 @@
 #! /bin/bash
 
+ISSUE_ORGS=("srv" "dsh" "aut" "bld" "py")
+ISSUE_KINDS=("fix" "new" "con" "ref")
+ISSUE_REPOS=("tsk/plan" "tsk/back")
+ISSUE_DEFAULT_REPO="tsk/plan"
+
 function issue {
+# auxiliary functions
     function check_dependencies {
         dependencies=("tea" "fzf")
         for cmd in "${dependencies[@]}"; do
@@ -12,22 +18,19 @@ function issue {
     }
 
     function show_help {
-        cat <<EOF
-Usage: issue [repo] [option] [arguments]
+        echo "Usage: issue [repo] [option] [arguments]
 
 Options:
-  help, --help             Show this help message.
-  [repo]                   Specify the repository to operate on. Valid repos: tsk/plan tsk/back
-  new [org/version] [title] [description] [kind/severity]
-                           Create a new issue or interactively enter details.
-  close [issue_id]         Close the specified issue by ID.
-  list, ls [filter-type] [value]
-                           List issues, optionally filter by keyword, label, state, or author.
-                           Interactively select issues to view their details.
-                           filter-type: k/key/keyword, l/lab/label/labels, s/state, a/author
-  labels                   Display available kinds/labels.
-  orgs                     Display available orgs.
-EOF
+    help, --help             Show this help message
+    n, new                   Create a new issue or interactively enter details
+    c, close                 Close an opened issue with specified ID
+    o, open                  Open a closed issue with specified ID
+    l, ls, list [filter]     List issues, optionally filter by keyword, label, state, or author
+                             Filters: k/key/keyword, l/lab/label/labels, s/state, a/author
+    repos                    Display available repos
+    labels                   Display available kinds/labels
+    orgs                     Display available orgs
+        "
     }
 
     function list_options {
@@ -105,8 +108,8 @@ EOF
 
     function new_issue {
         local org_version title description kind_severity kind severity
-        local orgs_regex=$(list_options "${orgs[@]}")
-        local kinds_regex=$(list_options "${kinds[@]}")
+        local orgs_regex=$(list_options "${ISSUE_ORGS[@]}")
+        local kinds_regex=$(list_options "${ISSUE_KINDS[@]}")
 
         echo "Enter org/version:"
         while true; do
@@ -159,20 +162,16 @@ EOF
         echo "ok: The issue has been created."
     }
 
+# issue function properly
+    local repo="$ISSUE_DEFAULT_REPO"
     check_dependencies || return 1
-    
-    local orgs=("srv" "dsh" "aut" "bld" "py")
-    local kinds=("fix" "new" "con" "ref")
-    local repos=("tsk/plan" "tsk/back")
-    local default_repo="tsk/plan"
-    local repo="$default_repo"
 
     if [[ -z "$1" ]]; then
-        tea open --repo "${default_repo}" issues
+        tea open --repo "${ISSUE_DEFAULT_REPO}" issues
         return
     fi
     
-    if [[ " ${repos[*]} " == *" tsk/$1 "* ]]; then
+    if [[ " ${ISSUE_REPOS[*]} " == *" tsk/$1 "* ]]; then
         repo="tsk/$1"
         shift
     fi
@@ -241,13 +240,13 @@ EOF
             fi            
             ;;
         repos)
-            echo "Repos: ${repos[*]}"
+            echo "Repos: ${ISSUE_REPOS[*]}"
             ;;
         labels)
-            echo "Labels: ${kinds[*]}"
+            echo "Labels: ${ISSUE_KINDS[*]}"
             ;;
         orgs)
-            echo "Orgs: ${orgs[*]}"
+            echo "Orgs: ${ISSUE_ORGS[*]}"
             ;;
         *)
             echo "error: Option '$1' not defined. Use 'help' option for usage."
