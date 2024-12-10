@@ -1,0 +1,52 @@
+globals:
+  browser: firefox
+  editor: vim
+  labels:
+    - fix
+    - feat
+    - idea
+    - ref
+    - doc
+    - conf
+
+providers:
+  github:
+    provider: github
+    base_url: https://api.github.com
+
+projects:
+  futils:
+    provider: github
+    repo: ximenesyuri/futils
+    issues: true
+    labels:
+      - py
+
+  termyx:
+    provider: github
+    repo: ximenesyuri/termyx
+    issues: true
+    labels:
+      - js
+
+  evim:
+    provider: github
+    repo: ximenesyuri/evim
+    issues: true
+    labels:
+      - vim
+
+  cmd:
+    provider: github
+    repo: ximenesyuri/cmd
+    issues: true
+    labels:
+      - py
+
+  g:
+    provider: github
+    repo: ximenesyuri/g
+    issues: true
+    labels:
+      - py
+

@@ -1,0 +1,51 @@
+# yml/api.yml
+github:
+  version: v3
+  base_url: https://api.github.com
+  issues:
+    list:
+      method: GET
+      endpoint: repos/:repo/issues
+    create:
+      method: POST
+      endpoint: repos/:repo/issues
+    update:
+      method: PATCH
+      endpoint: repos/:repo/issues/:issue_number
+    comment:
+      method: POST
+      endpoint: repos/:repo/issues/:issue_number/comments
+
+gitlab:
+  version: v4
+  base_url: https://gitlab.com/api
+  issues:
+    list:
+      method: GET
+      endpoint: projects/:repo/issues
+    create:
+      method: POST
+      endpoint: projects/:repo/issues
+    update:
+      method: PUT
+      endpoint: projects/:repo/issues/:issue_id
+    comment:
+      method: POST
+      endpoint: projects/:repo/issues/:issue_id/notes
+
+gitea:
+  version: v1
+  base_url: https://gitea.com/api
+  issues:
+    list:
+      method: GET
+      endpoint: repos/:repo/issues
+    create:
+      method: POST
+      endpoint: repos/:repo/issues
+    update:
+      method: PATCH
+      endpoint: repos/:repo/issues/:index
+    comment:
+      method: POST
+      endpoint: repos/:repo/issues/:index/comments
