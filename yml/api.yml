@@ -15,6 +15,16 @@ github:
     comment:
       method: POST
       endpoint: repos/:repo/issues/:issue_number/comments
+  labels:
+    list:
+      method: GET
+      endpoint: repos/:repo/labels
+    create:
+      method: POST
+      endpoint: repos/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/labels/:name
 
 gitlab:
   version: v4
@@ -32,6 +42,16 @@ gitlab:
     comment:
       method: POST
       endpoint: projects/:repo/issues/:issue_id/notes
+  labels:
+    list:
+      method: GET
+      endpoint: projects/:repo/labels
+    create:
+      method: POST
+      endpoint: projects/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: projects/:repo/labels/:label_id
 
 gitea:
   version: v1
@@ -49,3 +69,14 @@ gitea:
     comment:
       method: POST
       endpoint: repos/:repo/issues/:index/comments
+  labels:
+    list:
+      method: GET
+      endpoint: repos/:repo/labels
+    create:
+      method: POST
+      endpoint: repos/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/labels/:id
+
