@@ -14,7 +14,7 @@
 
 # Dependencies
 
-1. `bash`, i.e, a UNIX-based operating system
+1. `bash`: i.e, a UNIX-based operating system
 2. [fzf](https://github.com/junegunn/fzf)
 3. [jq](https://github.com/jqlang/jq)
 4. [yq](https://github.com/mikefarah/yq)
