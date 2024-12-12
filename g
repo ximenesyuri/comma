@@ -5,6 +5,7 @@ function g {
     G_API="${BASH_SOURCE%/*}/yml/api.yml"
 
     source ${BASH_SOURCE%/*}/sh/conf.sh
+    source ${BASH_SOURCE%/*}/sh/color.sh
     source ${BASH_SOURCE%/*}/sh/utils.sh
     source ${BASH_SOURCE%/*}/sh/api.sh
     source ${BASH_SOURCE%/*}/sh/help.sh

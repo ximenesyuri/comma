@@ -8,12 +8,10 @@ globals:
     - ref
     - doc
     - conf
-
 providers:
   github:
     provider: github
     base_url: https://api.github.com
-
 projects:
   futils:
     provider: github
@@ -21,28 +19,24 @@ projects:
     issues: true
     labels:
       - py
-
   termyx:
     provider: github
     repo: ximenesyuri/termyx
     issues: true
     labels:
       - js
-
   evim:
     provider: github
     repo: ximenesyuri/evim
     issues: true
     labels:
       - vim
-
   cmd:
     provider: github
     repo: ximenesyuri/cmd
     issues: true
     labels:
       - py
-
   g:
     provider: github
     repo: ximenesyuri/g
@@ -50,3 +44,8 @@ projects:
     labels:
       - py
 
+  ideas:
+    issues: true
+    repo: ximenesyuri/ideas
+    labels:
+      - ""

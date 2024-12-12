@@ -93,28 +93,24 @@ function show_issue_details {
     local body=$(echo "$issue" | jq -r '.body // "No description available." | @text' | fold -s -w 80 | sed 's/^/    > /')
 
     local comments_json=$(fetch_issue_comments "$repo" "$provider" "$issue_number")
-
-    local blue="\033[34m"
-    local magenta="\033[35m"
-    local reset="\033[0m"
-
+ 
     local label_width=12
 
-    printf "${blue}%-*s${reset} %s\n" $label_width "Project:" "$project_name"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Repo:" "$full_repo"
-    echo -e "${magenta}------------------------------------${reset}"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Issue ID:" "$issue_number"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Url:" "$url"
-    echo -e "${magenta}------------------------------------${reset}"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Title:" "$title"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Author:" "$author"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Creation:" "$created_at"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Modif:" "$updated_at"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Labels:" "$labels"
-    printf "${blue}%-*s${reset} %s\n" $label_width "Comments:" "$comments_count"
-    printf "${blue}%-*s${reset}\n" $label_width "Description:"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Project:" "$project_name"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Repo:" "$full_repo"
+    echo -e "${SECONDARY}------------------------------------${RESET}"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Issue ID:" "$issue_number"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Url:" "$url"
+    echo -e "${SECONDARY}------------------------------------${RESET}"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Title:" "$title"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Author:" "$author"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Creation:" "$created_at"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Modif:" "$updated_at"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Labels:" "$labels"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $label_width "Comments:" "$comments_count"
+    printf "${PRIMARY}%-*s${RESET}\n" $label_width "Description:"
     echo -e "$body"
-    echo -e "${magenta}------------------------------------${reset}"
+    echo -e "${SECONDARY}------------------------------------${RESET}"
 
     if [[ -n "$comments_json" && "$(echo "$comments_json" | jq empty 2>/dev/null)" == "" ]]; then
         echo "No comments."
@@ -124,7 +120,7 @@ function show_issue_details {
             local comment_json=$(echo "$line" | cut -d'.' -f2-)
             local comment_body=$(echo "$comment_json" | jq -r '.body // "Empty comment" | @text' | fold -s -w 80 | sed 's/^/    > /')
 
-            echo -e "${magenta}------------------------------------${reset}"
+            echo -e "${SECONDARY}------------------------------------${RESET}"
             echo "Comment #$comment_index"
             echo "$comment_body"
         done
@@ -140,23 +136,20 @@ function fetch_issue_comments {
     call_api "$provider" "GET" "${endpoint_comments//:repo/$repo}/$issue_id/comments"
 }
 
-
 function create_new_issue {
     local repo="$1"
-    local provider="$2"
-
-    echo "Fetching existing labels..."
+    local provider="$2" 
     local labels=$(fetch_labels "$repo" "$provider")
     local label_names=$(echo "$labels" | jq -r '.[].name')
 
-    local blue="\033[34m"
-    local reset="\033[0m" 
+    local PRIMARY="\033[34m"
+    local RESET="\033[0m" 
 
-    echo "${blue}Title:${reset}"
+    echo -e "${PRIMARY}Title:${RESET}"
     read -e -r -p "> " title
-    echo "${blue}Description:${reset}"
+    echo -e "${PRIMARY}Description:${RESET}"
     read -e -r -p "> " description
-    echo "${blue}Labels:"
+    echo -e "${PRIMARY}Labels:"
     selected_labels=$(echo "$label_names" | fzf --multi $fzf_geometry)
 
     selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
@@ -165,8 +158,6 @@ function create_new_issue {
     local json_payload="{\"title\": \"${title}\", \"body\": \"${description}\", \"labels\": ${selected_labels_json}}"
 
     local response=$(call_api "$provider" "POST" "${endpoint_create//:repo/$repo}" "$json_payload")
-
-    echo "Debug: JSON Payload - $json_payload"
 
     if [[ $? -eq 0 && "$(echo "$response" | jq -r '.message')" == "null" ]]; then
         echo "ok: The issue has been created."
@@ -187,9 +178,6 @@ function edit_issue {
     local repo="$1"
     local provider="$2"
 
-    local blue="\033[34m"
-    local reset="\033[0m"
-
     local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
     local issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}")
 
@@ -199,7 +187,6 @@ function edit_issue {
     fi
 
     local selection=$(echo "$issues" | jq -r '.[] | "\(.number) \(.title)"' | fzf $fzf_geometry)
-    
     local issue_number=$(echo "$selection" | awk '{print $1}')
     if [[ -z "$issue_number" ]]; then
         echo "No issue selected."
@@ -209,37 +196,34 @@ function edit_issue {
     local endpoint_issue=$(g_get_api_info "$provider" "issues.update.endpoint")
     endpoint_issue="${endpoint_issue/:repo/$repo}"
     endpoint_issue="${endpoint_issue/:issue_number/$issue_number}"
-    
-    local issue=$(call_api "$provider" "GET" "$endpoint_issue")
 
-    if [[ $? -ne 0 || -z "$issue" || "$(echo "$issue" | jq -r '.message')" == "Not Found" ]]; then
-        echo "Error fetching issue details or issue not found. Check API response and authentication."
-        echo "Debug: API Response - $issue"
-        return 1
-    fi
+    local issue=$(call_api "$provider" "GET" "$endpoint_issue")
 
     local current_title=$(echo "$issue" | jq -r '.title // "No Title"')
     local current_body=$(echo "$issue" | jq -r '.body // "No description available."')
-    local current_labels=$(echo "$issue" | jq -r '[.labels[].name] | join(", ")')
+    local current_labels=$(echo "$issue" | jq -r '[.labels[].name] | join(", ") // "null"')
 
-    echo -e "${blue}New title:${reset}"
-    echo -n "> "
-    read -e -r new_title
+    echo -e ${PRIMARY}Title:${RESET} "$current_title"
+    echo "New Title:"
+    read -e -r -p "> " new_title
     new_title=${new_title:-$current_title}
 
-    echo -e "${blue}New description:${reset}"
-    echo -n "> "
-    read -e -r new_body
+    echo -e ${SECONDARY}-------------------${RESET}
+
+    echo -e ${PRIMARY}Description:${RESET} $(echo "$current_body" | fold -s -w 80)
+    echo -e ${PRIMARY}New Description:${RESET}
+    read -e -r -p "> " new_body
     new_body=${new_body:-$current_body}
+
+    echo -e ${SECONDARY}-------------------${RESET}
+    echo -e ${PRIMARY}Labels:${RESET} $current_labels
+    echo -e ${PRIMARY}New Labels:${RESET}
 
     local labels=$(fetch_labels "$repo" "$provider")
     local label_names=$(echo "$labels" | jq -r '.[].name')
-
-    echo -e "${blue}New Labels:${reset}"
     local selected_labels=$(echo "$label_names" | fzf --multi $fzf_geometry)
-    local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
+    local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')  
 
-    # Update issue
     local data="{\"title\": \"$new_title\", \"body\": \"$new_body\", \"labels\": $selected_labels_json}"
     local response=$(call_api "$provider" "PATCH" "$endpoint_issue" "$data")
 
@@ -256,7 +240,6 @@ function change_issue_state {
     local new_state="$3"
     local state_label="$4"
 
-    # Fetch issues based on the desired current state (open or closed)
     local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
     local current_issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}?state=$state_label")
 
@@ -272,13 +255,11 @@ function change_issue_state {
 
     local selections=$( echo "$current_issues" | jq -r '.[] | "\(.number) \(.title)"' | fzf --multi $fzf_geometry)
 
-    # Validate selections
     if [[ -z "$selections" ]]; then
         echo "No issues selected."
         return 0
     fi
 
-    # Change state for each selected issue
     echo "$selections" | while read -r selection; do
         local issue_number=$(echo "$selection" | awk '{print $1}')
         if [[ -z "$issue_number" ]]; then
