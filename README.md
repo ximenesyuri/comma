@@ -1,6 +1,6 @@
 # About
 
-`g`  is a universal CLI tool to manage git providers, as Github, Gitlab and Gitea, made with `bash`, `yaml` and `fzf`, to work as a lightweight replacement for the core functionalities of [gh](https://github.com/cli/cli), [glab](https://gitlab.com/gitlab-org/cli), [tea](https://gitea.com/gitea/tea), and so on. It also allow to create custom `bash` pipelines for git projects, allowing to work, for example, as a git hooks tool.
+`g`  is a universal CLI tool to manage git providers, as Github, Gitlab and Gitea, made with `bash`, `yaml` and `fzf`, to work as a lightweight replacement for the core functionalities of [gh](https://github.com/cli/cli), [glab](https://gitlab.com/gitlab-org/cli), [tea](https://gitea.com/gitea/tea), and so on. It also allows to create custom `bash` pipelines for git projects, allowing to work, for example, as a git hooks tool.
 
 # Features
 
