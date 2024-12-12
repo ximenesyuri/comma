@@ -12,6 +12,15 @@
 6. Create, clone and delete repositories
 7. Define global or per project `bash` pipelines
 
+# Dependencies
+
+1. `bash`, i.e, a UNIX-based operating system
+2. [fzf](https://github.com/junegunn/fzf)
+3. [jq](https://github.com/jqlang/jq)
+4. [yq](https://github.com/mikefarah/yq)
+
+> The missing dependencies could be installed with the `install.sh` script.
+
 # Usage
 
 ```
