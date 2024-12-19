@@ -45,6 +45,7 @@ projects:
       - py
 
   ideas:
+    provider: github
     issues: true
     repo: ximenesyuri/ideas
     labels:
