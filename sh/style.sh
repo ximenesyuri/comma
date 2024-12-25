@@ -1,5 +1,7 @@
+# ANSI COLORS
 RED="\033[31m"
 GREEN="\033[32m"
+YELLOW="\033[33m"
 BLUE="\033[34m"
 MAGENTA="\033[35m"
 RESET="\033[0m"
@@ -9,34 +11,35 @@ SECONDARY=${G_COLOR_SECONDARY:-$MAGENTA}
 ERROR=${G_COLOR_ERROR:-$RED}
 DONE=${G_COLOR_DONE:-$GREEN}
 INFO=${G_COLOR_INFO:-$MAGENTA}
+WARN=${G_COLOR_WARN:-$WARN}
 
-WIDTH=${G_WIDTH:-12}
-fzf_geometry_="--height=20% --layout=reverse"
-FZF_GEOMETRY="${G_FZF_GEOMETRY:-$fzf_geometry_}"
+# LABELS COLORS
+LABEL_RED_="ff0000"
+LABEL_GREEN_="00ff00"
+LABEL_BLUE_="0000ff"
+LABEL_YELLOW_="ffff00"
+LABEL_CYAN_="00ffff"
+LABEL_MAGENTA_="ff00ff"
+LABEL_WHITE_="ffffff"
+LABEL_BLACK_="000000"
 
-label_default_color_="ffffff"
-LABEL_DEFAULT_COLOR="${G_LABEL_DEFAULT_COLOR:-$label_default_color_}"
+LABEL_RED="${G_LABEL_COLOR_RED:-$LABEL_RED_}"
+LABEL_GREEN="${G_LABEL_COLOR_GREEN:-$LABEL_GREEN_}"
+LABEL_BLUE="${G_LABEL_COLOR_BLUE:-$LABEL_BLUE_}"
+LABEL_YELLOW="${G_LABEL_COLOR_YELLOW:-$LABEL_YELLOW_}"
+LABEL_CYAN="${G_LABEL_COLOR_CYAN:-$LABEL_CYAN_}"
+LABEL_MAGENTA="${G_LABEL_COLOR_MAGENTA:-$LABEL_MAGENTA_}"
+LABEL_WHITE="${G_LABEL_COLOR_WHITE:-$LABEL_WHITE_}"
+LABEL_BLACK="${G_LABEL_COLOR_BLACK:-$LABEL_BLACK_}"
 
-function primary_(){
-    echo -e "${PRIMARY}$1${RESET}"
-}
+LABEL_DEFAULT_COLOR="${G_LABEL_DEFAULT_COLOR:-$LABEL_WHITE}"
 
-function secondary_(){
-    echo -e "${SECONDARY}$1${RESET}"
-}
+# TEXT STRUCTURE
+TEXT_WIDTH=${G_TEXT_WIDTH:-80}
+LABEL_WIDTH=${G_LABEL_WIDTH:-12}
+FZF_GEOMETRY_="--height=30% --layout=reverse"
+FZF_GEOMETRY="${G_FZF_GEOMETRY:-$FZF_GEOMETRY_}"
 
-function line_(){
-    secondary_ "-----------------------"
-}
+LINE_="-----------------------"
+LINE=${G_LINE_STRING:-$LINE_}
 
-function error_(){
-    echo -e "${ERROR}error:${RESET} $1"
-}
-
-function done_(){
-    echo -e "${DONE}done:${RESET} $1"
-}
-
-function info_(){
-    echo -e "${INFO}info:${RESET} $1"
-}

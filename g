@@ -5,7 +5,8 @@ function g {
     G_API="${BASH_SOURCE%/*}/yml/api.yml"
 
     source ${BASH_SOURCE%/*}/sh/conf.sh
-    source ${BASH_SOURCE%/*}/sh/color.sh
+    source ${BASH_SOURCE%/*}/sh/style.sh
+    source ${BASH_SOURCE%/*}/sh/log.sh
     source ${BASH_SOURCE%/*}/sh/utils.sh
     source ${BASH_SOURCE%/*}/sh/api.sh
     source ${BASH_SOURCE%/*}/sh/help.sh
@@ -13,9 +14,7 @@ function g {
     source ${BASH_SOURCE%/*}/sh/issue.sh
     source ${BASH_SOURCE%/*}/sh/label.sh
 
-    fzf_geometry="--height=20% --layout=reverse"
-
-    check_dependencies || return 1
+    deps_ || return 1
     local first_arg="$1"
 
     if [[ -z "$first_arg" ]]; then

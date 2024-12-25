@@ -15,7 +15,7 @@ providers:
 projects:
   futils:
     provider: github
-    repo: ximenesyuri/futils
+    repo: f-utils/general
     issues: true
     labels:
       - py
@@ -25,12 +25,7 @@ projects:
     issues: true
     labels:
       - js
-  evim:
-    provider: github
-    repo: ximenesyuri/evim
-    issues: true
-    labels:
-      - vim
+  
   cmd:
     provider: github
     repo: ximenesyuri/cmd
