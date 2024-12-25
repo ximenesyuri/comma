@@ -24,7 +24,7 @@ function manage_issues {
             create_new_issue "$project_repo" "$provider"
             ;;
         ls)
-            list_issues "$project_repo" "$provider"
+            list_issues "$project_repo" "$provider" "$@"
             ;;
         close|c)
             change_issue_state "$project_repo" "$provider" "close" "open"
@@ -45,23 +45,80 @@ function manage_issues {
 function list_issues {
     local repo="$1"
     local provider="$2"
+    shift 2
+
+    # Default filter state
+    local state_filter='state=open'
+    local label_filter=""
+    local name_filter=""
+    local desc_filter=""
+    local owner_filter=""
     
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -l|--label|--labels)
+                label_filter="$2"
+                shift
+                ;;
+            -n|--name|--title)
+                name_filter="$2"
+                shift
+                ;;
+            -d|--desc|--description)
+                desc_filter="$2"
+                shift
+                ;;
+            -o|--owner)
+                owner_filter="$2"
+                shift
+                ;;
+            -c|--close)
+                state_filter='state=closed'
+                ;;
+            -r|--reopen)
+                state_filter='state=all'
+                ;;
+            -a|--all)
+                state_filter='state=all'
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+        shift
+    done
+
     local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
-    local issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}")
+    local issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}?$state_filter")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
         echo "Error fetching issues or no issues available."
         return 1
     fi
 
-    if echo "$issues" | jq empty 2>/dev/null; then
-        local selection=$(echo "$issues" | jq -r '.[] | "\(.number) \(.title)"' | fzf $fzf_geometry)
-        if [[ -n "$selection" ]]; then
-            local issue_id=$(echo "$selection" | awk '{print $1}')
-            show_issue_details "$repo" "$provider" "$issue_id"
-        fi
+    # Build jq filter
+    local jq_filter=".[]"
+    [[ -n $label_filter ]] && jq_filter+=" | select((.labels[]?.name | test(\"$label_filter\")) // false)"
+    [[ -n $name_filter ]] && jq_filter+=" | select((.title | test(\"$name_filter\")) // false)"
+    [[ -n $desc_filter ]] && jq_filter+=" | select((.body | test(\"$desc_filter\")) // false)"
+    [[ -n $owner_filter ]] && jq_filter+=" | select((.user.login | test(\"$owner_filter\")) // false)"
+
+    # Apply filters using jq
+    local filtered_issues=$(echo "$issues" | jq -c "[$jq_filter]")
+
+    if [[ -z "$filtered_issues" || "$filtered_issues" == "[]" ]]; then
+        echo "No matching issues found."
+        return 1
+    fi
+
+    # Use fzf to select an issue
+    local selection=$(echo "$filtered_issues" | jq -r '.[] | "\(.number) \(.title)"' | fzf $fzf_geometry)
+    if [[ -n "$selection" ]]; then
+        local issue_id=$(echo "$selection" | awk '{print $1}')
+        show_issue_details "$repo" "$provider" "$issue_id"
     else
-        echo "Invalid response format. Please check API validity and credentials."
+        echo "No issues selected."
     fi
 }
 
