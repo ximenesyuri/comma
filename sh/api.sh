@@ -38,7 +38,7 @@ function call_api {
             return 1
             ;;
     esac
-
+    
     if echo "$response" | jq empty 2>/dev/null; then
         echo "$response"
     else

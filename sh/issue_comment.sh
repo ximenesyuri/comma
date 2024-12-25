@@ -1,7 +1,8 @@
 function manage_issue_comments {
     local project_name="$1"
+    shift
     local action="$2"
-
+    
     local project_config
     project_config=$(g_get_project_info "$project_name")
 
@@ -22,18 +23,22 @@ function manage_issue_comments {
                     echo $comments_json
                     return 1
                 fi
-                local comment_ids=$(select_comment "$project_repo" "$provider" "$issue_number" --multi)
-                if [[ -n "$comment_ids" ]]; then
-                    echo "$comment_ids" | while read -r comment_id; do
-                        if jq -e ".[] | select(.id == $comment_id)" <<< "$comments_json" > /dev/null 2>&1; then
-                            local comment_json=$(echo "$comments_json" | jq -r ".[] | select(.id == $comment_id)")
-                            display_comment "$comment_json"
-                        else
-                            error_ "Error processing comment #$comment_id."
-                        fi
-                    done
+                if echo "$comments_json" | jq -e . >/dev/null 2>&1; then
+                    local comment_ids=$(select_comment "$project_repo" "$provider" "$issue_number" --multi)
+                    if [[ -n "$comment_ids" ]]; then
+                        echo "$comment_ids" | while read -r comment_id; do
+                            if jq -e ".[] | select(.id == $comment_id)" <<< "$comments_json" > /dev/null 2>&1; then
+                                local comment_json=$(echo "$comments_json" | jq -r ".[] | select(.id == $comment_id)")
+                                display_comment "$comment_json"
+                            else
+                                error_ "Error processing comment #$comment_id."
+                            fi
+                        done
+                    else
+                        error_ "No comments selected."
+                    fi
                 else
-                    error_ "No comments selected."
+                    error_ "Comments JSON is invalid or empty!"
                 fi
             else
                 error_ "No issue selected."
@@ -76,7 +81,6 @@ function manage_issue_comments {
             if [[ -n "$issue_number" ]]; then
                 local comments_json=$(check_for_comments "$project_repo" "$provider" "$issue_number")
                 if [[ -n "$(echo $comments_json | grep error:)" ]]; then
-                    echo $comments_json
                     return 1
                 fi
                 primary_  "Select the comments:"
@@ -127,7 +131,7 @@ function fetch_issue_comments {
 
     local endpoint_comments=$(g_get_api_info "$provider" "issues.comment.list.endpoint")
     endpoint_comments="${endpoint_comments//:repo/$repo}"
-    endpoint_comments="${endpoint_comments/:issue_number/$issue_number}"
+    endpoint_comments="${endpoint_comments//:issue_number/$issue_number}"
 
     local response=$(call_api "$provider" "GET" "$endpoint_comments")
 
@@ -167,7 +171,7 @@ function add_comment {
     endpoint_comment="${endpoint_comment//:repo/$repo}"
     endpoint_comment="${endpoint_comment/:issue_number/$issue_number}"
 
-    local json_payload="{\"body\": \"${comment_body}\"}"
+    local json_payload="{\"body\": ${comment_body}}"
 
     call_api "$provider" "POST" "$endpoint_comment" "$json_payload"
 }
@@ -178,7 +182,7 @@ function select_comment {
     local issue_number="$3"
     local options="$4" 
 
-    local selection=$(echo "$comments_json" | jq -r '.[] | "\(.id) \(.user.login) \((.body | split("\n")[0]) | if . then (if length > 80 then .[0:80] + "..." else . end) else "Empty comment" end)"' | fzf $options $FZF_GEOMETRY)
+    local selection=$(echo "$comments_json" | jq -r '.[] | if .body then (.id | tostring) + " " + .user.login + " " + (if (.body | gsub("\n"; " ") | length) > 80 then (.body | gsub("\n"; " ") | .[0:80] + "...") else .body | gsub("\n"; " ") end) else (.id | tostring) + " " + .user.login + " " + "Empty comment" end' | fzf $options $FZF_GEOMETRY)
 
     if [[ -n "$selection" ]]; then
         echo "$selection" | awk '{print $1}'
@@ -194,14 +198,14 @@ function display_comment {
     local author=$(echo "$comment_json" | jq -r '.user.login // "Unknown"')
     local created_at=$(echo "$comment_json" | jq -r '.created_at // "Unknown"')
     local updated_at=$(echo "$comment_json" | jq -r '.updated_at // "Unknown"')
-    local body=$(echo "$comment_json" | jq -r '.body // "No content." | @text' | fold -s -w 80 | sed 's/^/    > /')
+    local body=$(echo "$comment_json" | jq -r '.body // "No content." | @text' | fold_ | sed 's/^/    > /')
 
-    printf "${PRIMARY}%-*s${RESET} %s\n" $WIDTH "ID:" "$id"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $WIDTH "author:" "$author"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $WIDTH "creation:" "$created_at"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $WIDTH "modif:" "$updated_at"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "ID:" "$id"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "author:" "$author"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "creation:" "$created_at"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "modif:" "$updated_at"
     line_
-    printf "${PRIMARY}%-*s${RESET}\n" $WIDTH "Contents:"
+    printf "${PRIMARY}%-*s${RESET}\n" $LABEL_WIDTH "Contents:"
     echo -e "$body"
     line_
 }

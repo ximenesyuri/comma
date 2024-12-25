@@ -29,6 +29,10 @@ function manage_issues {
         close|c)
             change_issue_state "$project_repo" "$provider" "close" "open"
             ;;
+        comment|com|C)
+            source ${BASH_SOURCE%/*}/issue_comment.sh
+            manage_issue_comments "$project_name" "$provider" "$@"
+            ;;
         open|o)
             change_issue_state "$project_repo" "$provider" "open" "closed"
             ;;
@@ -209,12 +213,8 @@ function create_new_issue {
     local endpoint_create=$(g_get_api_info "$provider" "issues.create.endpoint")
     local json_payload="{\"title\": \"${title}\", \"body\": ${description}, \"labels\": ${selected_labels_json}}"
 
-    echo "$json_payload" | jq .
-
     local response=$(call_api "$provider" "POST" "${endpoint_create//:repo/$repo}" "$json_payload")
 
-    echo "AAAAAAAAAA"
-   
     if response_ $response; then 
         done_ "The issue has been created."
     else

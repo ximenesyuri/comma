@@ -1,4 +1,3 @@
-# yml/api.yml
 github:
   version: v3
   base_url: https://api.github.com
@@ -13,8 +12,18 @@ github:
       method: PATCH
       endpoint: repos/:repo/issues/:issue_number
     comment:
-      method: POST
-      endpoint: repos/:repo/issues/:issue_number/comments
+      list:
+        method: GET
+        endpoint: repos/:repo/issues/:issue_number/comments
+      create:
+        method: POST
+        endpoint: repos/:repo/issues/:issue_number/comments
+      edit:
+        method: PATCH
+        endpoint: repos/:repo/issues/comments/:comment_id
+      delete:
+        method: DELETE
+        endpoint: repos/:repo/issues/comments/:comment_id
   labels:
     list:
       method: GET
@@ -40,8 +49,18 @@ gitlab:
       method: PUT
       endpoint: projects/:repo/issues/:issue_id
     comment:
-      method: POST
-      endpoint: projects/:repo/issues/:issue_id/notes
+      list:
+        method: GET
+        endpoint: projects/:repo/issues/:issue_id/notes
+      create:
+        method: POST
+        endpoint: projects/:repo/issues/:issue_id/notes
+      edit:
+        method: PUT
+        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
+      delete:
+        method: DELETE
+        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
   labels:
     list:
       method: GET
@@ -67,8 +86,18 @@ gitea:
       method: PATCH
       endpoint: repos/:repo/issues/:index
     comment:
-      method: POST
-      endpoint: repos/:repo/issues/:index/comments
+      list:
+        method: GET
+        endpoint: repos/:repo/issues/:index/comments
+      create:
+        method: POST
+        endpoint: repos/:repo/issues/:index/comments
+      edit: # Gitea does not support editing comments via API
+        method: PATCH
+        endpoint: repos/:repo/issues/:index/comments
+      delete:
+        method: DELETE
+        endpoint: repos/:repo/issues/comments/:comment_id
   labels:
     list:
       method: GET
