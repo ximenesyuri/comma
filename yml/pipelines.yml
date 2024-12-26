@@ -1,0 +1,9 @@
+pipelines:
+  some_pipe:
+    metadata:
+      name: 
+      desc:
+    commands:
+      - command 1
+      - command 2
+      - ...

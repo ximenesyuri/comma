@@ -1,29 +1,25 @@
 #! /bin/bash
 
 function g {
-    G_CONF="${BASH_SOURCE%/*}/yml/g.yml"
-    G_API="${BASH_SOURCE%/*}/yml/api.yml"
-
-    source ${BASH_SOURCE%/*}/sh/conf.sh
     source ${BASH_SOURCE%/*}/sh/style.sh
     source ${BASH_SOURCE%/*}/sh/log.sh
     source ${BASH_SOURCE%/*}/sh/utils.sh
-    source ${BASH_SOURCE%/*}/sh/api.sh
     source ${BASH_SOURCE%/*}/sh/help.sh
+
+    source ${BASH_SOURCE%/*}/sh/api.sh
+    source ${BASH_SOURCE%/*}/sh/conf.sh
     source ${BASH_SOURCE%/*}/sh/prj.sh
-    source ${BASH_SOURCE%/*}/sh/issue.sh
-    source ${BASH_SOURCE%/*}/sh/label.sh
 
     deps_ || return 1
     local first_arg="$1"
 
     if [[ -z "$first_arg" ]]; then
-        g_help
+        help_
         return 0
     fi
 
     if [[ "$first_arg" == "help" || "$first_arg" == "--help" ]]; then
-        g_help
+        help_
         return 0
     fi
 
@@ -40,16 +36,16 @@ function g {
     if $is_project_command; then
         case "$first_arg" in
             new)
-                g_new
+                new_proj
                 ;;
             rm)
-                g_rm
+                remove_proj
                 ;;
             ls)
-                g_ls
+                list_projs
                 ;;
             *)
-                g_help
+                help_
                 ;;
         esac
         return 0
@@ -58,27 +54,29 @@ function g {
     local topic="$1"
     shift
     if [[ -z "$topic" ]]; then
-        g_help
+        help_
         return 0
     fi
 
     case "$topic" in
         i|issue|issues)
+            source ${BASH_SOURCE%/*}/sh/issue.sh
             local action="$1"
             shift
             if [[ -z "$action" ]]; then
-                g_help
+                help_
                 return 0
             fi
 
-            manage_issues "$project_name" "$action" "$@"
+            issues_ "$project_name" "$action" "$@"
             ;;
         l|label|labels)
-            manage_labels "$project_name" "$@"
+            source ${BASH_SOURCE%/*}/sh/label.sh
+            labels_ "$project_name" "$@"
             ;;
         # Add other topics here
         *)
-            g_help
+            help_
             ;;
     esac
 }

@@ -1,18 +1,18 @@
-function manage_issues {
+function issues_ {
     local project_name="$1"
     local action="$2"
     shift 2
 
     local project_config
-    project_config=$(g_get_project_info "$project_name")
+    project_config=$(get_proj "$project_name")
 
     if [[ -z "$project_config" || "$project_config" == "null" ]]; then
-        echo "error: Project '$project_name' not found."
+        error_ "Project '$project_name' not found."
         return 1
     fi
 
     if [[ $(yq e '.issues' <<< "$project_config") != "true" ]]; then
-        echo "error: Project '$project_name' does not support issues."
+        error_ "Project '$project_name' does not support issues."
         return 2
     fi
 
@@ -21,20 +21,20 @@ function manage_issues {
 
     case "$action" in
         new|n)
-            create_new_issue "$project_repo" "$provider"
+            new_issue "$project_repo" "$provider"
             ;;
         ls)
             list_issues "$project_repo" "$provider" "$@"
             ;;
         close|c)
-            change_issue_state "$project_repo" "$provider" "close" "open"
+            change_state "$project_repo" "$provider" "close" "open"
             ;;
         comment|com|C)
             source ${BASH_SOURCE%/*}/issue_comment.sh
-            manage_issue_comments "$project_name" "$provider" "$@"
+            comments_ "$project_name" "$provider" "$@"
             ;;
         open|o)
-            change_issue_state "$project_repo" "$provider" "open" "closed"
+            change_state "$project_repo" "$provider" "open" "closed"
             ;;
         edit|e)
             edit_issue "$project_repo" "$provider"
@@ -93,11 +93,11 @@ function list_issues {
         shift
     done
 
-    local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
+    local endpoint_list=$(get_api "$provider" "issues.list.endpoint")
     local issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}?$state_filter")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
-        echo "Error fetching issues or no issues available."
+        error_ "Could not fetch issues."
         return 1
     fi
 
@@ -117,18 +117,18 @@ function list_issues {
     local selection=$(echo "$filtered_issues" | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
     if [[ -n "$selection" ]]; then
         local issue_id=$(echo "$selection" | awk '{print $1}')
-        show_issue_details "$repo" "$provider" "$issue_id"
+        show_issue "$repo" "$provider" "$issue_id"
     else
         echo "No issues selected."
     fi
 }
 
-function show_issue_details {
+function show_issue {
     local repo="$1"
     local provider="$2"
     local issue_number="$3"
 
-    local endpoint_issue=$(g_get_api_info "$provider" "issues.update.endpoint")
+    local endpoint_issue=$(get_api "$provider" "issues.update.endpoint")
     endpoint_issue="${endpoint_issue/:repo/$repo}"
     endpoint_issue="${endpoint_issue/:issue_number/$issue_number}"
 
@@ -150,7 +150,7 @@ function show_issue_details {
     local comments_count=$(echo "$issue" | jq -r '.comments // "0"')
     local body=$(echo "$issue" | jq -r '.body // "No description available." | @text' | fold_ | sed 's/^/    > /')
 
-    local comments_json=$(fetch_issue_comments "$repo" "$provider" "$issue_number")
+    local comments_json=$(fetch_comments "$repo" "$provider" "$issue_number")
  
 
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Project:" "$project_name"
@@ -184,16 +184,16 @@ function show_issue_details {
     fi
 }
 
-function fetch_issue_comments {
+function fetch_comments {
     local repo="$1"
     local provider="$2"
     local issue_id="$3"
 
-    local endpoint_comments=$(g_get_api_info "$provider" "issues.comment.endpoint")
+    local endpoint_comments=$(get_api "$provider" "issues.comment.endpoint")
     call_api "$provider" "GET" "${endpoint_comments//:repo/$repo}/$issue_id/comments"
 }
 
-function create_new_issue {
+function new_issue {
     local repo="$1"
     local provider="$2" 
     local labels=$(fetch_labels "$repo" "$provider")
@@ -210,7 +210,7 @@ function create_new_issue {
 
     selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
-    local endpoint_create=$(g_get_api_info "$provider" "issues.create.endpoint")
+    local endpoint_create=$(get_api "$provider" "issues.create.endpoint")
     local json_payload="{\"title\": \"${title}\", \"body\": ${description}, \"labels\": ${selected_labels_json}}"
 
     local response=$(call_api "$provider" "POST" "${endpoint_create//:repo/$repo}" "$json_payload")
@@ -228,7 +228,7 @@ function fetch_labels {
     local repo="$1"
     local provider="$2"
 
-    local endpoint_list=$(g_get_api_info "$provider" "labels.list.endpoint")
+    local endpoint_list=$(get_api "$provider" "labels.list.endpoint")
     call_api "$provider" "GET" "${endpoint_list//:repo/$repo}"
 }
 
@@ -236,7 +236,7 @@ function edit_issue {
     local repo="$1"
     local provider="$2"
 
-    local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
+    local endpoint_list=$(get_api "$provider" "issues.list.endpoint")
     local issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
@@ -251,7 +251,7 @@ function edit_issue {
         return 1
     fi
 
-    local endpoint_issue=$(g_get_api_info "$provider" "issues.update.endpoint")
+    local endpoint_issue=$(get_api "$provider" "issues.update.endpoint")
     endpoint_issue="${endpoint_issue/:repo/$repo}"
     endpoint_issue="${endpoint_issue/:issue_number/$issue_number}"
 
@@ -284,9 +284,7 @@ function edit_issue {
     local data="{\"title\": \"$new_title\", \"body\": $new_body, \"labels\": $selected_labels_json}"
     local response=$(call_api "$provider" "PATCH" "$endpoint_issue" "$data")
 
-    echo "AAAAAAAAAA"
     if response_ $response; then 
-        echo "BBBBBBBB"
         done_ "The issue has been edited."
     else
         error_ "Failed to edit the issue."
@@ -294,13 +292,13 @@ function edit_issue {
     fi 
 }
 
-function change_issue_state {
+function change_state {
     local repo="$1"
     local provider="$2"
     local new_state="$3"
     local state_label="$4"
 
-    local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
+    local endpoint_list=$(get_api "$provider" "issues.list.endpoint")
     local current_issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}?state=$state_label")
 
     if [[ $? -ne 0 || -z "$current_issues" ]]; then
@@ -327,7 +325,7 @@ function change_issue_state {
             continue
         fi
 
-        local endpoint_issue=$(g_get_api_info "$provider" "issues.update.endpoint")
+        local endpoint_issue=$(get_api "$provider" "issues.update.endpoint")
         endpoint_issue="${endpoint_issue/:repo/$repo}"
         endpoint_issue="${endpoint_issue/:issue_number/$issue_number}"
 

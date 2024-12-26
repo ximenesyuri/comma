@@ -1,0 +1,10 @@
+globals:
+  browser: firefox
+  editor: vim
+  labels:
+    - fix
+    - feat
+    - idea
+    - ref
+    - doc
+    - conf

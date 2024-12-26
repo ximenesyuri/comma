@@ -42,4 +42,3 @@ FZF_GEOMETRY="${G_FZF_GEOMETRY:-$FZF_GEOMETRY_}"
 
 LINE_="-----------------------"
 LINE=${G_LINE_STRING:-$LINE_}
-

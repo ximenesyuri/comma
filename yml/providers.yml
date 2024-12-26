@@ -1,0 +1,4 @@
+providers:
+  github:
+    provider: github
+    base_url: https://api.github.com

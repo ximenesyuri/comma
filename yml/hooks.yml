@@ -1,0 +1,8 @@
+hooks:
+  some_hook:
+    metadata:
+      name:
+      desc:
+    trigger: trigger command
+    pipeline:  
+

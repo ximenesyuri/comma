@@ -1,10 +1,10 @@
-function manage_issue_comments {
+function comments_ {
     local project_name="$1"
     shift
     local action="$2"
     
     local project_config
-    project_config=$(g_get_project_info "$project_name")
+    project_config=$(get_proj "$project_name")
 
     if [[ -z $project_config || "$project_config" == "null" ]]; then
         error_ "Project '$project_name' not found."
@@ -112,7 +112,7 @@ function manage_issue_comments {
 function select_issue {
     local repo="$1"
     local provider="$2"
-    local endpoint_list=$(g_get_api_info "$provider" "issues.list.endpoint")
+    local endpoint_list=$(get_api "$provider" "issues.list.endpoint")
     issues=$(call_api "$provider" "GET" "${endpoint_list//:repo/$repo}")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
@@ -129,7 +129,7 @@ function fetch_issue_comments {
     local provider="$2"
     local issue_number="$3"
 
-    local endpoint_comments=$(g_get_api_info "$provider" "issues.comment.list.endpoint")
+    local endpoint_comments=$(get_api "$provider" "issues.comment.list.endpoint")
     endpoint_comments="${endpoint_comments//:repo/$repo}"
     endpoint_comments="${endpoint_comments//:issue_number/$issue_number}"
 
@@ -167,7 +167,7 @@ function add_comment {
     primary_ "Comment Body:"
     input_ -e "md" -v comment_body
 
-    local endpoint_comment=$(g_get_api_info "$provider" "issues.comment.new.endpoint")
+    local endpoint_comment=$(get_api "$provider" "issues.comment.new.endpoint")
     endpoint_comment="${endpoint_comment//:repo/$repo}"
     endpoint_comment="${endpoint_comment/:issue_number/$issue_number}"
 
@@ -225,7 +225,7 @@ function edit_comment {
         return 1
     fi
 
-    local endpoint_comment=$(g_get_api_info "$provider" "issues.comment.edit.endpoint")
+    local endpoint_comment=$(get_api "$provider" "issues.comment.edit.endpoint")
     endpoint_comment="${endpoint_comment//:repo/$repo}"
     endpoint_comment="${endpoint_comment//:comment_id/$comment_id}"
 
@@ -246,7 +246,7 @@ function delete_comments {
     local issue_number="$3"
     local comment_id="$4"
 
-    local endpoint_comment=$(g_get_api_info "$provider" "issues.comment.delete.endpoint")
+    local endpoint_comment=$(get_api "$provider" "issues.comment.delete.endpoint")
     endpoint_comment="${endpoint_comment//:repo/$repo}"
     endpoint_comment="${endpoint_comment//:comment_id/$comment_id}"
 

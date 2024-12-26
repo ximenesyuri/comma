@@ -1,7 +1,11 @@
-function g_get_api_info {
+local dir_=${BASH_SOURCE%/*}
+local main_=${dir_%/*}
+local API_="${main_}/src/yml/api.yml"
+
+function get_api {
     local provider=$1
     local key=$2
-    yq e ".${provider}.${key}" "$G_API"
+    yq e ".${provider}.${key}" "$API_"
 }
 
 function call_api {
@@ -10,8 +14,8 @@ function call_api {
     local endpoint=$3
     local data=$4
 
-    local base_url=$(g_get_api_info "$provider" "base_url")
-    local version=$(g_get_api_info "$provider" "version")
+    local base_url=$(get_api "$provider" "base_url")
+    local version=$(get_api "$provider" "version")
 
     case $provider in
         github)
@@ -42,7 +46,8 @@ function call_api {
     if echo "$response" | jq empty 2>/dev/null; then
         echo "$response"
     else
-        echo "error: Unable to parse API response. Response: $response"
+        error_ "Unable to parse API response."
+        error_ "Response: $response"
         return 1
     fi
 }

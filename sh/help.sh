@@ -1,4 +1,4 @@
-function g_help {
+function help_ {
         echo "Usage:
     g [command]
     g [project] [general_command] [argument]

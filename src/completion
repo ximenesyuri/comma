@@ -1,0 +1,65 @@
+#! /bin/bash
+
+
+function _g_compl_prj(){
+    prjs=($(get_ projects))
+    declare -A prj_prim_act=(
+        ["issue"]="new ls edit close reopen comment"
+        ["label"]="new ls edit rm"
+        ["pr"]="new ls close reopen merge"
+    )
+    prj_prim_obj=(${!prj_prim_act[@]})
+ 
+    declare -A prj_sec_act=(
+        ["comment"]="new ls rm edit"
+    )
+    prj_sec_obj=(${!prj_sec_act[@]})
+ 
+
+    if [[ "${prjs[@]}" =~ "$1" ]]; then
+        echo "${prj_prim_obj[*]}"
+    elif [[ "${prj_prim_obj[@]}" =~ "$1" ]]; then
+        echo "${prj_prim_act[$1]}"
+    elif [[ "${prj_sec_obj[@]}" =~ "$1" ]]; then
+        echo "${prj_sec_act[$1]}"
+    fi
+
+}
+
+function _g_compl() {
+    local dir_=${BASH_SOURCE%/*}
+    local main_=${dir_%/*}
+    source $main_/sh/conf.sh
+    local commands projects topics
+
+    function prev(){
+        if [[ -z "$1" ]]; then
+            echo "${COMP_WORDS[COMP_CWORD-1]}"
+        elif [[ $1 -eq 0 ]]; then
+            echo "${COMP_WORDS[COMP_CWORD]}"
+        elif [[ $1 -gt 0 ]]; then
+            echo "${COMP_WORDS[COMP_CWORD-$1]}"
+        elif [[ $1 -lt 0 ]]; then
+            echo "${COMP_WORDS[COMP_CWORD+$1]}"
+        else
+            echo "error: wrong entry for 'pos()'"
+        fi
+    } 
+
+    cmds=("help" "new" "rm" "ls" "info")
+    prjs=($(get_ projects))
+
+    sugg=()
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        sugg="${cmds[*]} ${prjs[*]}"
+    elif [[ "${prjs[@]}" =~ "$(prev 1)" ]]; then
+        sugg=($(_g_compl_prj $(prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(prev 2)" ]]; then
+        sugg=($(_g_compl_prj $(prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(prev 3)" ]]; then
+        sugg=($(_g_compl_prj $(prev 1)))
+    fi
+    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(prev 0)") )
+}
+
+complete -F _g_compl g

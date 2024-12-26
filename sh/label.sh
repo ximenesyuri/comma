@@ -1,9 +1,9 @@
-function manage_labels {
+function labels_ {
     local project_name="$1"
     local action="$2"
 
     local project_config
-    project_config=$(g_get_project_info "$project_name")
+    project_config=$(get_proj "$project_name")
 
     if [[ -z $project_config || "$project_config" == "null" ]]; then
         echo "error: Project '$project_name' not found."
@@ -15,10 +15,10 @@ function manage_labels {
 
     case "$action" in
         new)
-            primary_ "New label name:"
+            primary_ "Label name:"
             input_ -v label_name
             line_
-            primary_ -c "New label color" -n "(name or hex without #):"
+            primary_ -c "Label color" -n "(name or hex without #):"
             input_ -v color_input
             local label_color
             label_color=$(get_hex_ "$color_input")
@@ -27,9 +27,9 @@ function manage_labels {
                 return 1
             fi
             line_
-            primary_ "New label description:"
+            primary_ "Label description:"
             input -e md -v label_description 
-            local endpoint_create=$(g_get_api_info "$provider" "labels.create.endpoint")
+            local endpoint_create=$(get_api "$provider" "labels.create.endpoint")
             local data="{\"name\": \"$label_name\", \"color\": \"$label_color\", \"description\": \"$label_description\"}"
             response=$(call_api "$provider" "POST" "${endpoint_create//:repo/$project_repo}" "$data")
             if response_ $response; then 
@@ -40,7 +40,7 @@ function manage_labels {
             fi
             ;;
         rm)
-            local endpoint_list=$(g_get_api_info "$provider" "labels.list.endpoint")
+            local endpoint_list=$(get_api "$provider" "labels.list.endpoint")
             local labels=$(call_api "$provider" "GET" "${endpoint_list//:repo/$project_repo}")
 
             if [[ -n "$labels" ]]; then
@@ -49,7 +49,7 @@ function manage_labels {
                 if [[ -n "${label_names[@]}" ]]; then
                     for label_name in ${label_names[@]}; do
                         local label_name_encoded=$(echo -n "$label_name" | jq -sRr @uri)
-                        local endpoint_delete=$(g_get_api_info "$provider" "labels.delete.endpoint")
+                        local endpoint_delete=$(get_api "$provider" "labels.delete.endpoint")
                         local url="${endpoint_delete//:repo/$project_repo}"
                         url="${url//:name/$label_name_encoded}"
                         response=$(call_api "$provider" "DELETE" "$url")
@@ -68,35 +68,40 @@ function manage_labels {
             fi
             ;;
         edit)
-            local endpoint_list=$(g_get_api_info "$provider" "labels.list.endpoint")
+            local endpoint_list=$(get_api "$provider" "labels.list.endpoint")
             local labels=$(call_api "$provider" "GET" "${endpoint_list//:repo/$project_repo}")
 
             if [[ -n "$labels" ]]; then
-                local label_name=$(echo "$labels" | jq -r '.[] | .name' | fzf)
+                local label_name=$(echo "$labels" | jq -r '.[] | .name' | fzf $FZF_GEOMETRY)
                 if [[ -n "$label_name" ]]; then
                     info_ "Editing label '$label_name'. Leave fields blank to keep it."
+                    line_
                     local current_label=$(echo "$labels" | jq -r --arg name "$label_name" '.[] | select(.name==$name)')
                     local current_color=$(echo "$current_label" | jq -r '.color')
                     local current_description=$(echo "$current_label" | jq -r '.description')
 
-                    echo -e ${PRIMARY}"Current Name:${RESET} $label_name"
+                    primary_ -c "Current Name:" -n "$label_name"
                     primary_ "New Name:"
-                    input -e md -v new_name
+                    input_ -e md -v new_name
                     new_name=${new_name:-$label_name}
                     line_
 
-                    echo -e ${PRIMARY}"Current Color:${RESET} #$current_color"
-                    primary_ "New Color:"
-                    input_ -e md -v new_color
-                    new_color=${new_color:-$current_color}
+                    primary_ -c "Current Color:" -n "#$current_color"
+                    primary_ -c "New color" -n "(name or hex without #):"
+                    input_ -v color_input
+                    local new_color
+                    new_color=$(get_hex_ "$color_input")
+                    if [[ $? -ne 0 || -z "$new_color" ]]; then
+                        error_ "Label color is not in the given format."
+                        return 1
+                    fi 
                     line_
-
                     echo -e ${PRIMARY}"Current Description:${RESET} $current_description"
                     input_ -e md -v new_description
                     new_description=${new_description:-$current_description}
 
                     local label_name_encoded=$(echo -n "$label_name" | jq -sRr @uri)
-                    local endpoint_update=$(g_get_api_info "$provider" "labels.create.endpoint")
+                    local endpoint_update=$(get_api "$provider" "labels.create.endpoint")
                     local url="${endpoint_update//:repo/$project_repo}/$label_name_encoded"
                     local data="{\"name\": \"$new_name\", \"color\": \"$new_color\", \"description\": \"$new_description\"}"
                     
@@ -115,7 +120,7 @@ function manage_labels {
             fi
             ;;
         ls)
-            local endpoint_list=$(g_get_api_info "$provider" "labels.list.endpoint")
+            local endpoint_list=$(get_api "$provider" "labels.list.endpoint")
             local labels=$(call_api "$provider" "GET" "${endpoint_list//:repo/$project_repo}")
 
             printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Project:" "$project_name"
@@ -139,7 +144,7 @@ function manage_labels {
             fi
             ;; 
         *)
-            echo "Invalid action for labels. Use 'new', 'rm', 'edit', or 'ls'."
+            echo "Invsalid action for labels. Use 'new', 'rm', 'edit', or 'ls'."
             return 1
             ;;
     esac

@@ -1,4 +1,22 @@
-function g_new {
+function get_proj {
+    local project_name=$1
+    yq e ".projects.${project_name}" "$YML_PROJECTS"
+}
+
+function list_projs {
+    local projects
+    projects=$(get_ projects)
+    if [[ -n "${projects}" ]]; then
+        echo "Projects:"
+        echo "$projects" | while read -r project; do
+            echo "- $project"
+        done
+    else
+        echo "No projects found."
+    fi
+}
+
+function new_proj {
     echo "Enter new project name:"
     read -e -r -p "> " project_name
     if [[ -n "$project_name" ]]; then
@@ -16,7 +34,11 @@ function g_new {
     fi
 }
 
-function g_rm {
+function edit_proj(){
+    echo "TBA"
+}
+
+function delete_proj {
     local projects
     projects=$(g_get_projects)
     if [[ -n "${projects}" ]]; then
@@ -35,15 +57,3 @@ function g_rm {
     fi
 }
 
-function g_ls {
-    local projects
-    projects=$(g_get_projects)
-    if [[ -n "${projects}" ]]; then
-        echo "Projects:"
-        echo "$projects" | while read -r project; do
-            echo "- $project"
-        done
-    else
-        echo "No projects found."
-    fi
-}
