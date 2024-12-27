@@ -4,5 +4,4 @@ hooks:
       name:
       desc:
     trigger: trigger command
-    pipeline:  
-
+    pipeline: 

@@ -11,13 +11,13 @@ function issues_ {
         return 1
     fi
 
-    if [[ $(yq e '.issues' <<< "$project_config") != "true" ]]; then
+    if [[ $(yq e '.server.issues' <<< "$project_config") != "true" ]]; then
         error_ "Project '$project_name' does not support issues."
         return 2
     fi
 
-    local project_repo=$(yq e '.repo' <<< "$project_config")
-    local provider=$(yq e '.provider' <<< "$project_config")
+    local project_repo=$(yq e '.server.repo' <<< "$project_config")
+    local provider=$(yq e '.server.provider' <<< "$project_config")
 
     case "$action" in
         new|n)

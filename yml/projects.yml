@@ -1,22 +1,19 @@
-
-
-hooks:
-  some_hook:
-    metadata:
-      name:
-      desc:
-    trigger: trigger command
-
-
 projects:
   futils:
     local:
-      name:
-      desc:
-      path: $YX_DEV/f/general
-      labels: 
-        - label 1
-        - label 2
+      metadata:
+        name:
+        desc:
+        path: $YX_DEV/f/general
+        tags: 
+          - tag 1
+          - tag 2
+      hooks:
+        - hook 1
+        - hook 2
+      pipes:
+        - pipe 1
+        - pipe 2
 
     server:
       provider: github
@@ -28,30 +25,35 @@ projects:
         labels:
 
   termyx:
-    provider: github
-    repo: ximenesyuri/termyx
-    issues: true
-    labels:
+    server:
+      provider: github
+      repo: ximenesyuri/termyx
+      issues: true
+      labels:
       - js
   
   cmd:
-    provider: github
-    repo: ximenesyuri/cmd
-    issues: true
-    labels:
-      - py
+    server:
+      provider: github
+      repo: ximenesyuri/cmd
+      issues: true
+      labels:
+        - py
+
   g:
-    provider: github
-    repo: ximenesyuri/g
-    issues: true
-    labels:
-      - py
+    server:
+      provider: github
+      repo: ximenesyuri/g
+      issues: true
+      labels:
+        - py
 
   ideas:
-    provider: github
-    issues: true
-    repo: ximenesyuri/ideas
-    labels:
-      - ""
+    server:
+      provider: github
+      issues: true
+      repo: ximenesyuri/ideas
+      labels:
+        - ""
 
 
