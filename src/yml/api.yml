@@ -34,10 +34,33 @@ github:
     delete:
       method: DELETE
       endpoint: repos/:repo/labels/:name
+  milestones:
+    list:
+      method: GET
+      endpoint: repos/:repo/milestones
+    create:
+      method: POST
+      endpoint: repos/:repo/milestones
+    update:
+      method: PATCH
+      endpoint: repos/:repo/milestones/:milestone_number
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/milestones/:milestone_number
+  prs:
+    list:
+      method: GET
+      endpoint: repos/:repo/pulls
+    create:
+      method: POST
+      endpoint: repos/:repo/pulls
+    update:
+      method: PATCH
+      endpoint: repos/:repo/pulls/:pull_number
 
 gitlab:
   version: v4
-  base_url: https://gitlab.com/api
+  base_url: https://gitlab.com/api/v4
   issues:
     list:
       method: GET
@@ -47,20 +70,7 @@ gitlab:
       endpoint: projects/:repo/issues
     update:
       method: PUT
-      endpoint: projects/:repo/issues/:issue_id
-    comment:
-      list:
-        method: GET
-        endpoint: projects/:repo/issues/:issue_id/notes
-      create:
-        method: POST
-        endpoint: projects/:repo/issues/:issue_id/notes
-      edit:
-        method: PUT
-        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
-      delete:
-        method: DELETE
-        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
+      endpoint: projects/:repo/issues/:issue_iid
   labels:
     list:
       method: GET
@@ -71,10 +81,33 @@ gitlab:
     delete:
       method: DELETE
       endpoint: projects/:repo/labels/:label_id
+  milestones:
+    list:
+      method: GET
+      endpoint: projects/:repo/milestones
+    create:
+      method: POST
+      endpoint: projects/:repo/milestones
+    update:
+      method: PUT
+      endpoint: projects/:repo/milestones/:milestone_id
+    delete:
+      method: DELETE
+      endpoint: projects/:repo/milestones/:milestone_id
+  prs:
+    list:
+      method: GET
+      endpoint: projects/:repo/merge_requests
+    create:
+      method: POST
+      endpoint: projects/:repo/merge_requests
+    update:
+      method: PUT
+      endpoint: projects/:repo/merge_requests/:merge_request_iid
 
 gitea:
   version: v1
-  base_url: https://gitea.com/api
+  base_url: https://gitea.com/api/v1
   issues:
     list:
       method: GET
@@ -84,20 +117,7 @@ gitea:
       endpoint: repos/:repo/issues
     update:
       method: PATCH
-      endpoint: repos/:repo/issues/:index
-    comment:
-      list:
-        method: GET
-        endpoint: repos/:repo/issues/:index/comments
-      create:
-        method: POST
-        endpoint: repos/:repo/issues/:index/comments
-      edit: # Gitea does not support editing comments via API
-        method: PATCH
-        endpoint: repos/:repo/issues/:index/comments
-      delete:
-        method: DELETE
-        endpoint: repos/:repo/issues/comments/:comment_id
+      endpoint: repos/:repo/issues/:issue_index
   labels:
     list:
       method: GET
@@ -108,4 +128,26 @@ gitea:
     delete:
       method: DELETE
       endpoint: repos/:repo/labels/:id
-
+  milestones:
+    list:
+      method: GET
+      endpoint: repos/:repo/milestones
+    create:
+      method: POST
+      endpoint: repos/:repo/milestones
+    update:
+      method: PATCH
+      endpoint: repos/:repo/milestones/:milestone_id
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/milestones/:milestone_id
+  prs:
+    list:
+      method: GET
+      endpoint: repos/:repo/pulls
+    create:
+      method: POST
+      endpoint: repos/:repo/pulls
+    update:
+      method: PATCH
+      endpoint: repos/:repo/pulls/:index

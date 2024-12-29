@@ -1,5 +1,4 @@
-function issue_ {
-     
+function issue_ {     
     local proj_="$1"
     local act_="$2"
     local proj_str=".projects.$proj_"
@@ -165,7 +164,7 @@ function show_issue {
     line_
 
     if [[ -n "$comments_json" && "$(echo "$comments_json" | jq empty 2>/dev/null)" == "" ]]; then
-        error_ "No comments."
+        echo "No comments."
     else
         echo "$comments_json" | jq -c '.[]' | nl -w1 -s'. ' | while read -r line; do
             local comment_index=$(echo "$line" | cut -d'.' -f1)
@@ -251,11 +250,11 @@ function edit_issue {
     fi
 
     local endpoint_=$(get_api "$prov_" ".issues.update.endpoint")
-    endpoint_="${endpoint_/:repo/$repo_}"
-    endpoint_="${endpoint_/:issue_number/$number_}"
+    local endpoint_="${endpoint_/:repo/$repo_}"
+    local endpoint_="${endpoint_/:issue_number/$number_}"
     local method_=$(get_api "$prov_" ".issues.update.method")
 
-    local issue=$(call_api "$prov_" "$method" "$endpoint_")
+    local issue=$(call_api "$prov_" "$method_" "$endpoint_")
 
     local current_title=$(echo "$issue" | jq -r '.title // "No Title"')
     local current_body=$(echo "$issue" | jq -r '.body // "No description available."')
@@ -282,7 +281,7 @@ function edit_issue {
     local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')  
 
     local data_="{\"title\": \"$new_title\", \"body\": $new_body, \"labels\": $selected_labels_json}"
-    local response=$(call_api "$prov_" "PATCH" "$endpoint_" "$data_")
+    local response=$(call_api "$prov_" "$method_" "$endpoint_" "$data_")
 
     if response_ $response; then 
         done_ "The issue has been edited."

@@ -180,3 +180,45 @@ function response_() {
     return 0
 }
 
+function is_date_(){
+    if [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        error_ "Invalid date format. Use YYYY-MM-DD."
+        return 1
+    fi
+    return 0
+}
+
+function date_(){
+    if [[ -z "$1" ]]; then
+        error_ "Missing date"
+    elif is_date_ $1; then
+        echo "${1}T00:00:00Z"
+    fi
+}
+
+function tab_ {
+    local num_tabs="$1"
+    local tabs=""
+    local TAB_=${G_TAB:-\\t}
+    for ((i=0; i<num_tabs; i++)); do
+        tabs+="$TAB_"
+    done
+    echo -ne "$tabs"
+}
+
+function item_ {
+    secondary_ -c "$(tab_ 1)-" -n "$1"
+}
+
+function list_ {
+    local elements=("$@")
+
+    if [ ${#elements[@]} -eq 0 ]; then
+        item_ "none"
+    else
+        for element in "${elements[@]}"; do
+            item_ "$element"
+        done
+    fi
+}
+
