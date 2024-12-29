@@ -4,13 +4,16 @@
 
 # Features
 
-1. Unified management
+1. Unified project management
 2. Easily configurable with `yaml`
 3. intuitive `fzf` interface
-4. Project oriented with centralized configuration
-5. Handle issues, labels, PRs/MRs, and so on
-6. Create, clone and delete repositories
-7. Define global or per project `bash` pipelines
+4. Project-oriented with centralized configuration
+5. Project level and global level settings
+6. Handle issues, labels, milestones, PRs/MRs, and so on
+7. Create, clone and delete repositories
+8. Define global or per project `bash` pipelines
+9. User friendly with multiples command aliases
+10. Completion script
 
 # Dependencies
 
@@ -25,8 +28,27 @@
 
 ```
 USAGE
-    g [core_command] [argument]
-    g [project_name] [project_command] [argument]
+    g [action] [object] [argument]
+    g [default_object] [service/command] [action]
+
+ACTIONS
+    l, ls, list .................................. list something
+    i, info ...................................... get info about something
+    n, new, c, create ............................ creates something
+    r, rm, d, del, delete ........................ delete something
+    e, ed, edit .................................. edit something
+
+OBJECTS
+    p, prj, proj, project(s)...................... projects
+    P, pv, prv, prov, provider(s)................. providers
+    pp, pip, pipe, pipeline(s) ................... pipelines
+    h, hk, hook(s) ............................... hooks
+
+SERVICES[proj]
+    i, iss, issue(s) ............................. issues
+    l, lbl, label(s) ............................. labels
+    m, mil, mile, milestone(s) ................... milestones
+    pr, mr, pull-request(s), merge-request(s) .... pull requests and merge-requests
 ```
 
 

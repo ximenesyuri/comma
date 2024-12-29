@@ -1,4 +1,5 @@
 local dir_=${BASH_SOURCE%/*}
+local dir_=${dir_%/*}
 local main_=${dir_%/*}
 
 lGLOBALS_="${main_}/yml/globals.yml"

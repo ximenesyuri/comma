@@ -1,82 +1,112 @@
 #! /bin/bash
 
 function g {
-    source ${BASH_SOURCE%/*}/sh/style.sh
-    source ${BASH_SOURCE%/*}/sh/log.sh
-    source ${BASH_SOURCE%/*}/sh/utils.sh
-    source ${BASH_SOURCE%/*}/sh/help.sh
+    source ${BASH_SOURCE%/*}/sh/core/style.sh
+    source ${BASH_SOURCE%/*}/sh/core/log.sh
+    source ${BASH_SOURCE%/*}/sh/core/utils.sh
+    source ${BASH_SOURCE%/*}/sh/core/help.sh
 
-    source ${BASH_SOURCE%/*}/sh/api.sh
-    source ${BASH_SOURCE%/*}/sh/conf.sh
-    source ${BASH_SOURCE%/*}/sh/prj.sh
+    YML_API=${BASH_SOURCE%/*}/src/yml/api.yml 
+    source ${BASH_SOURCE%/*}/sh/core/api.sh
+    source ${BASH_SOURCE%/*}/sh/core/conf.sh
 
-    deps_ || return 1
-    local first_arg="$1"
-
-    if [[ -z "$first_arg" ]]; then
-        help_
-        return 0
-    fi
-
-    if [[ "$first_arg" == "help" || "$first_arg" == "--help" ]]; then
-        help_
-        return 0
-    fi
-
-    local project_name
-    if [[ "$first_arg" == "new" || "$first_arg" == "rm" || "$first_arg" == "ls" ]]; then
-        project_name=""
-        is_project_command=true
+    declare -a OBJ_=("proj" "prov" "pipe" "hook")
+    for obj in ${OBJ_[@]}; do
+        eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj/$obj.sh"
+        eval "OBJ_${obj^^}=OBJ_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj"
+    done
+    
+    if [[ -n "${G_DEFAULT_OBJECT}" ]]; then
+        if [[ ${OBJ_[@]} =~ "${G_DEFAULT_OBJECT}" ]]; then
+            local DEFAULT_OBJ=${G_DEFAULT_OBJECT}
+        else
+            error_ "Error in env 'G_DEFAULT_OBJECT': '$G_DEFAULT_OBJECT' is not a valid object."
+            return 1
+        fi
     else
-        project_name="$first_arg"
-        is_project_command=false
-        shift
+       local DEFAULT_OBJ="proj"
     fi
+    
+    declare -A OBJ_ALIASES=(
+        [proj]="p pj prj project projects"
+        [prov]="P pv pvd prv provider providers"
+        [pipe]="pp pipeline pipelines"
+        [hook]="h hk hooks"
+    )
 
-    if $is_project_command; then
-        case "$first_arg" in
-            new)
-                new_proj
-                ;;
-            rm)
-                remove_proj
-                ;;
-            ls)
-                list_projs
-                ;;
-            *)
-                help_
-                ;;
-        esac
-        return 0
-    fi
+    declare -a ACT_=(ls new rm info help)
 
-    local topic="$1"
-    shift
-    if [[ -z "$topic" ]]; then
+    declare -A ACT_ALIASES=(
+        [list]="l ls"
+        [new]="n c create"
+        [remove]="r rm d del delete"
+        [info]="i"
+        [edit]="e ed"
+        [help]="h --help -h"
+    )
+    
+    deps_ || return 1
+
+    if [[ -z "$1" ]]; then
         help_
         return 0
     fi
 
-    case "$topic" in
-        i|issue|issues)
-            source ${BASH_SOURCE%/*}/sh/issue.sh
-            local action="$1"
-            shift
-            if [[ -z "$action" ]]; then
-                help_
-                return 0
-            fi
+    if [[ "$1" == "help" ]] ||
+       [[ "$1" == "-h" ]] ||
+       [[ "$1" == "--help" ]] && 
+       [[ -z "$2" ]]; then
+        help_
+        return 0
+    fi 
 
-            issues_ "$project_name" "$action" "$@"
-            ;;
-        l|label|labels)
-            source ${BASH_SOURCE%/*}/sh/label.sh
-            labels_ "$project_name" "$@"
-            ;;
-        # Add other topics here
-        *)
-            help_
-            ;;
-    esac
+    for act in ${ACT_[@]}; do
+        declare -a aliases=(${ACT_ALIASES[$act]})
+        local match_act=0
+        if [[ "${aliases[@]}" =~ "$1" ]] ||
+           [[ "$1" == "$act" ]]; then
+            if [[ -z "$2" ]]; then
+                shift 1
+                local main_="MAIN_${DEFAULT_OBJ^^}"
+                source ${!main_}
+                "${act}"_"${DEFAULT_OBJ}" "$@"
+                if [[ ! "$?" == "0" ]]; then
+                    return 1
+                fi
+                return 0
+            else
+                local match_obj=0
+                for obj in ${OBJ_[@]}; do
+                    local aliases=(${OBJ_ALIASES[$obj]})
+                    if [[ "${aliases[@]}" =~ "$2" ]] ||
+                       [[ "$2" == "obj" ]]; then
+                        shift 2
+                        local main_="MAIN_${obj^^}"
+                        source ${!main_}
+                        "${act}"_"${obj}" "$@"
+                        if [[ ! "$?" == "0" ]]; then
+                            return 1
+                        fi
+                        return 0
+                    fi
+                done
+            fi
+            if [[ $match_obj -eq 0 ]]; then
+                error_ "Available objects: ${OBJ_[*]}"
+                return 1
+            fi 
+        fi
+    done
+
+    projs=($(get_ projects))
+
+    if [[ "${projs[@]}" =~ "$1" ]]; then
+        local main_=MAIN_PROJ
+        source ${!main_}
+        proj_ "$@"
+    else 
+        error_ "Available actions: ${ACT_[*]}"
+        error_ "Available projects: ${projs[*]}"
+        return 1
+    fi    
 }

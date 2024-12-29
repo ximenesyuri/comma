@@ -1,8 +1,6 @@
 #! /bin/bash
 
-
 function _g_compl_prj(){
-    prjs=($(get_ projects))
     declare -A prj_prim_act=(
         ["issue"]="new ls edit close reopen comment"
         ["label"]="new ls edit rm"
@@ -29,7 +27,7 @@ function _g_compl_prj(){
 function _g_compl() {
     local dir_=${BASH_SOURCE%/*}
     local main_=${dir_%/*}
-    source $main_/sh/conf.sh
+    source $main_/sh/core/conf.sh
     local commands projects topics
 
     function prev(){

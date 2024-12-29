@@ -1,11 +1,5 @@
-local dir_=${BASH_SOURCE%/*}
-local main_=${dir_%/*}
-local API_="${main_}/src/yml/api.yml"
-
 function get_api {
-    local provider=$1
-    local key=$2
-    yq e ".${provider}.${key}" "$API_"
+    yq e ".$1$2" "$YML_API"
 }
 
 function call_api {
@@ -14,8 +8,8 @@ function call_api {
     local endpoint=$3
     local data=$4
 
-    local base_url=$(get_api "$provider" "base_url")
-    local version=$(get_api "$provider" "version")
+    local base_url=$(get_api "$provider" ".base_url")
+    local version=$(get_api "$provider" ".version")
 
     case $provider in
         github)

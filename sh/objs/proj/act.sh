@@ -1,7 +1,20 @@
-function get_proj {
-    local project_name=$1
-    yq e ".projects.${project_name}" "$YML_PROJECTS"
+function cd_proj(){
+    project_name="$1"
+    path=$(get_proj "$project_name" ".local.path" | envsubst )
+    if [[ -n "$path" ]]; then
+        cd $path
+    fi
 }
+
+function open_proj(){
+    project_name="$1"
+    provider=$(get_proj "$project_name" ".server.provider" | envsubst )
+    repo=$(get_proj "$project_name" ".server.repo" | envsubst )
+    if [[ -n "$path" ]]; then
+        cd $path
+    fi
+}
+
 
 function list_projs {
     local projects
