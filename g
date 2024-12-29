@@ -13,7 +13,7 @@ function g {
     declare -a OBJ_=("proj" "prov" "pipe" "hook")
     for obj in ${OBJ_[@]}; do
         eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj/$obj.sh"
-        eval "OBJ_${obj^^}=OBJ_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj"
+        eval "ACT_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj/act.sh"
     done
     
     if [[ -n "${G_DEFAULT_OBJECT}" ]]; then
@@ -34,7 +34,7 @@ function g {
         [hook]="h hk hooks"
     )
 
-    declare -a ACT_=(ls new rm info help)
+    declare -a ACT_=(list new remove edit info help)
 
     declare -A ACT_ALIASES=(
         [list]="l ls"
@@ -67,8 +67,7 @@ function g {
            [[ "$1" == "$act" ]]; then
             if [[ -z "$2" ]]; then
                 shift 1
-                local main_="MAIN_${DEFAULT_OBJ^^}"
-                source ${!main_}
+                local act_="ACT_${DEFAULT_OBJ^^}"
                 "${act}"_"${DEFAULT_OBJ}" "$@"
                 if [[ ! "$?" == "0" ]]; then
                     return 1
@@ -81,8 +80,8 @@ function g {
                     if [[ "${aliases[@]}" =~ "$2" ]] ||
                        [[ "$2" == "obj" ]]; then
                         shift 2
-                        local main_="MAIN_${obj^^}"
-                        source ${!main_}
+                        local act_="ACT_${obj^^}"
+                        source ${!act_}
                         "${act}"_"${obj}" "$@"
                         if [[ ! "$?" == "0" ]]; then
                             return 1

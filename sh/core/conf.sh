@@ -2,7 +2,7 @@ local dir_=${BASH_SOURCE%/*}
 local dir_=${dir_%/*}
 local main_=${dir_%/*}
 
-lGLOBALS_="${main_}/yml/globals.yml"
+GLOBALS_="${main_}/yml/globals.yml"
 local PROJECTS_="${main_}/yml/projects.yml"
 local HOOKS_="${main_}/yml/hooks.yml"
 local PIPES_="${main_}/yml/pipelines.yml"

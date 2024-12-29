@@ -1,7 +1,9 @@
 function proj_(){
-    declare -a SERV_=(issue label pr miles prov hook pipe)
+
+    declare -a SERV_=(dot issue label pr miles prov hook pipe)
 
     declare -A SERV_ALIASES=(
+        [dot]="."
         [issue]="i issues"
         [label]="l labels"
         [pr]="p prs mr mrs pull-request pull-requests merge-request merge-requests"
@@ -15,15 +17,17 @@ function proj_(){
         eval "SERV_${serv^^}=${BASH_SOURCE%/*}/servs/$serv.sh"
     done
 
+    local match_serv=''
     for serv in ${SERV_[@]}; do
         declare -a aliases=(${SERV_ALIASES[$serv]})
         match_serv=0
-        if [[ -z "$1" ]]; then
+        if [[ -z "$2" ]]; then
             help_proj
             return 1
-        elif [[ "${aliases[@]}" =~ "$2" ]]; then
-            SERV=SERV_${serv^^}
-            source ${!SERV}
+        elif [[ "${aliases[@]}" =~ "$2" ]] ||
+             [[ "$2" == "$serv" ]]; then
+            serv_=SERV_${serv^^}
+            source ${!serv_}
             "${serv}_" "$1" "${@:3}"
             if [[ ! "$?" == "0" ]]; then
                 return 1
@@ -32,7 +36,7 @@ function proj_(){
         fi
     done
     if [[ $match_serv -eq 0 ]]; then
-        error_ "'$1' is not a valid service for the object proj."
+        error_ "'$2' is not a valid service for the object 'proj'."
         return 1
     fi
 }

@@ -1,11 +1,3 @@
-function cd_proj(){
-    project_name="$1"
-    path=$(get_proj "$project_name" ".local.path" | envsubst )
-    if [[ -n "$path" ]]; then
-        cd $path
-    fi
-}
-
 function open_proj(){
     project_name="$1"
     provider=$(get_proj "$project_name" ".server.provider" | envsubst )
@@ -16,7 +8,7 @@ function open_proj(){
 }
 
 
-function list_projs {
+function list_proj {
     local projects
     projects=$(get_ projects)
     if [[ -n "${projects}" ]]; then
@@ -51,7 +43,7 @@ function edit_proj(){
     echo "TBA"
 }
 
-function delete_proj {
+function remove_proj {
     local projects
     projects=$(g_get_projects)
     if [[ -n "${projects}" ]]; then

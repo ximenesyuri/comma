@@ -1,59 +1,68 @@
 projects:
-  futils:
+  f:
     local:
       metadata:
         name:
         desc:
-        path: $YX_DEV/f/general
         tags: 
           - tag 1
           - tag 2
-      hooks:
-        - hook 1
-        - hook 2
-      pipes:
-        - pipe 1
-        - pipe 2
+      spec:
+        path: $YX_DEV/f/general
+        dot: 
+        hooks:
+          - hook 1
+          - hook 2
+        pipes:
+          - pipe 1
+          - pipe 2
 
     server:
-      provider: github
-      repo: f-utils/general
-      issues: true
-      update:
-        name: 
-        desc: 
-        labels:
+      metadata:
+        name:
+        desc:
+      spec:
+        provider: github
+        repo: f-utils/general
+        services:
+          issues: true
+          labels:
+            - label 1
+            - label 2
 
   termyx:
-    server:
-      provider: github
-      repo: ximenesyuri/termyx
-      issues: true
-      labels:
-      - js
-  
-  cmd:
-    server:
-      provider: github
-      repo: ximenesyuri/cmd
-      issues: true
-      labels:
-        - py
+    local: 
+      spec:
+        path: $YX_DEV/js/termyx 
+
+    server: 
+      spec:
+        provider: github
+        repo: ximenesyuri/termyx
+        services:
+          issues: true  
 
   g:
-    server:
-      provider: github
-      repo: ximenesyuri/g
-      issues: true
-      labels:
-        - py
+    local: 
+      spec:
+        path: $YX_DEV/sh/g
+
+    server: 
+      spec:
+        provider: github
+        repo: ximenesyuri/g
+        services:
+          issues: true 
 
   ideas:
-    server:
-      provider: github
-      issues: true
-      repo: ximenesyuri/ideas
-      labels:
-        - ""
+    local: 
+      spec:
+        path: $YX_DEV/ideas 
 
+    server: 
+      spec:
+        provider: github
+        repo: ximenesyuri/ideas
+        services:
+          issues: true
 

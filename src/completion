@@ -2,6 +2,7 @@
 
 function _g_compl_prj(){
     declare -A prj_prim_act=(
+        ["dot"]="."
         ["issue"]="new ls edit close reopen comment"
         ["label"]="new ls edit rm"
         ["pr"]="new ls close reopen merge"

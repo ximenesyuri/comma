@@ -5,13 +5,13 @@ function issue_ {
     local proj_str=".projects.$proj_"
     shift 2 
 
-    if [[ $(yq e "$proj_str.server.issues" $YML_PROJECTS) != "true" ]]; then
+    if [[ $(yq e "$proj_str.server.spec.services.issues" $YML_PROJECTS) != "true" ]]; then
         error_ "Project '$proj_' does not support issues."
         return 2
     fi
 
-    local repo_=$(yq e "$proj_str.server.repo"  $YML_PROJECTS)
-    local prov_=$(yq e "$proj_str.server.provider" $YML_PROJECTS)
+    local repo_=$(yq e "$proj_str.server.spec.repo"  $YML_PROJECTS)
+    local prov_=$(yq e "$proj_str.server.spec.provider" $YML_PROJECTS)
 
     case "$act_" in
         new|n)
