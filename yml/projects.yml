@@ -50,7 +50,7 @@ projects:
     server: 
       spec:
         provider: github
-        repo: ximenesyuri/g
+        repo: ximenesyuri/comma
         services:
           issues: true 
 

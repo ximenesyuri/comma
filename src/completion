@@ -3,9 +3,10 @@
 function _comma_compl_prj(){
     declare -A prj_prim_act=(
         ["dot"]="."
-        ["issue"]="new ls edit close reopen comment"
-        ["label"]="new ls edit rm"
-        ["pr"]="new ls close reopen merge"
+        ["issue"]="ls new edit close reopen comment"
+        ["label"]="ls new edit rm"
+        ["pr"]="ls new close reopen merge"
+        ["miles"]="ls set new edito rm"
     )
     prj_prim_obj=(${!prj_prim_act[@]})
  
@@ -52,11 +53,11 @@ function _comma_compl() {
     if [[ $COMP_CWORD -eq 1 ]]; then
         sugg="${cmds[*]} ${prjs[*]}"
     elif [[ "${prjs[@]}" =~ "$(prev 1)" ]]; then
-        sugg=($(_g_compl_prj $(prev 1)))
+        sugg=($(_comma_compl_prj $(prev 1)))
     elif [[ "${prjs[@]}" =~ "$(prev 2)" ]]; then
-        sugg=($(_g_compl_prj $(prev 1)))
+        sugg=($(_comma_compl_prj $(prev 1)))
     elif [[ "${prjs[@]}" =~ "$(prev 3)" ]]; then
-        sugg=($(_g_compl_prj $(prev 1)))
+        sugg=($(_comma_compl_prj $(prev 1)))
     fi
     COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(prev 0)") )
 }

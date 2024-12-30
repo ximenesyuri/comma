@@ -1,8 +1,8 @@
 function help_ {
         echo "Usage:
-    g [command]
-    g [project] [general_command] [argument]
-    g [project] [topic] [action]
+    comma [command]
+    comma [project] [general_command] [argument]
+    comma [project] [topic] [action]
 
 General Commands:
     new                  Add a new project to the todo list

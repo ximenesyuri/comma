@@ -1,4 +1,4 @@
-function labels_ {
+function label_ {
     local project_name="$1"
     local action="$2"
 

@@ -30,8 +30,8 @@ function new_proj {
         echo "Enter custom labels for this project (comma-separated):"
         read -e -r -p "> " custom_labels
 
-        yq e -i ".projects.${project_name}.issues = $issues" "$G_CONF"
-        yq e -i ".projects.${project_name}.labels = [\"${custom_labels//,/\", \"}\"]" "$G_CONF"
+        yq e -i ".projects.${project_name}.issues = $issues" "$COMMA_CONF"
+        yq e -i ".projects.${project_name}.labels = [\"${custom_labels//,/\", \"}\"]" "$COMMA_CONF"
 
         echo "Project '$project_name' added with custom labels '${custom_labels}'."
     else
@@ -52,7 +52,7 @@ function remove_proj {
         echo "Are you sure you want to delete the project '$project_name'? (y/n)"
         read -e -r -p "> " confirm
         if [[ "$confirm" == "y" ]]; then
-            yq e -i "del(.projects.\"${project_name}\")" "$G_CONF"
+            yq e -i "del(.projects.\"${project_name}\")" "$COMMA_CONF"
             echo "Project '$project_name' removed."
         else
             echo "Project removal canceled."

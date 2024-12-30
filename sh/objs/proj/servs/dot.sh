@@ -7,7 +7,7 @@ function dot_() {
     fi
     local local_dot=$(yq e ".projects.${proj_name}.spec.dot" "$YML_PROJECTS")
     local global_dot=$(yq  e ".globals.dot" "$YML_GLOBALS")
-    local DOT_=${G_DOT:-cd}
+    local DOT_=${COMMA_DOT:-cd}
     if [[ -z "$local_dot" || "$local_dot" == "null" ]]; then
         if [[ -z "$global_dot" || "$global_dot" == "null" ]]; then
             "${DOT_}" "$path"

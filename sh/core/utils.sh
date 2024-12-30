@@ -199,7 +199,7 @@ function date_(){
 function tab_ {
     local num_tabs="$1"
     local tabs=""
-    local TAB_=${G_TAB:-\\t}
+    local TAB_=${COMMA_TAB:-\\t}
     for ((i=0; i<num_tabs; i++)); do
         tabs+="$TAB_"
     done
