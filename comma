@@ -1,6 +1,6 @@
 #! /bin/bash
 
-function g {
+function comma {
     source ${BASH_SOURCE%/*}/sh/core/style.sh
     source ${BASH_SOURCE%/*}/sh/core/log.sh
     source ${BASH_SOURCE%/*}/sh/core/utils.sh
@@ -109,3 +109,4 @@ function g {
         return 1
     fi    
 }
+

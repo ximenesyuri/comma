@@ -42,10 +42,10 @@ projects:
         services:
           issues: true  
 
-  g:
+  comma:
     local: 
       spec:
-        path: $YX_DEV/sh/g
+        path: $YX_DEV/sh/comma
 
     server: 
       spec:

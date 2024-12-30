@@ -1,6 +1,6 @@
 #! /bin/bash
 
-function _g_compl_prj(){
+function _comma_compl_prj(){
     declare -A prj_prim_act=(
         ["dot"]="."
         ["issue"]="new ls edit close reopen comment"
@@ -25,7 +25,7 @@ function _g_compl_prj(){
 
 }
 
-function _g_compl() {
+function _comma_compl() {
     local dir_=${BASH_SOURCE%/*}
     local main_=${dir_%/*}
     source $main_/sh/core/conf.sh
@@ -61,4 +61,5 @@ function _g_compl() {
     COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(prev 0)") )
 }
 
-complete -F _g_compl g
+complete -F _comma_compl comma
+complete -F _comma_compl ,
