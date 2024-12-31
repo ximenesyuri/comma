@@ -4,30 +4,30 @@ function miles_ {
     shift 2
 
     case "$act_" in
-        ls)
+        l|ls|list)
             list_milestones "$proj_"
             ;;
-        new)
+        n|new)
             new_milestone "$proj_"
             ;;
-        edit)
+        e|edit)
             edit_milestone "$proj_"
             ;;
-        rm)
+        r|rm|remove|d|del|delete)
             remove_milestone "$proj_"
             ;;
-        set)
+        a|attach)
             if [[ "$1" == "issue" ]]; then
-                set_milestone "$proj_" "issues"
+                attach_milestone "$proj_" "issues"
             elif [[ "$1" == "pr" || "$1" == "mr" ]]; then
-                set_milestone "$proj_" "prs"
+                attach_milestone "$proj_" "prs"
             else
                 error_ "Invalid command, use 'set issue' or 'set pr/mr'."
                 return 1
             fi
             ;;
         *)
-            error_ "Available actions: 'ls', 'new', 'edit', 'rm', 'set'."
+            error_ "Milestones actions: 'ls', 'new', 'edit', 'rm', 'set'."
             return 1
             ;;
     esac
@@ -80,13 +80,19 @@ function show_milestone {
 
 function list_milestones {
     local proj_="$1"
-    local milestones=$(fetch_milestones "$proj_")
-    local milestones=$( echo $milestones | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+    if [[ -n "$milestones" ]]; then
+        milestones=$( echo $milestones | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY) 
+    else
+        error_ "There is no milestones in proj '$proj_'."
+        return 1
+    fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
         show_milestone "$proj_" "$milestone_id"
     else
         error_ "No milestone selected."
+        return 1
     fi
 }
 
@@ -118,7 +124,13 @@ function new_milestone {
 
 function edit_milestone {
     local proj_="$1"
-    local milestones=$(fetch_milestones "$proj_" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+    if [[ -n "$milestones" ]]; then
+        local milestones=$( echo $milestones | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
+    else
+        error_ "There is no milestones in proj '$proj_'."
+        return 1
+    fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
         local current_milestone=$(fetch_milestones "$proj_" | jq -r ".[] | select(.id == $milestone_id)")
@@ -149,19 +161,27 @@ function edit_milestone {
         local response=$(call_api "$prov_" "$method_" "$endpoint_" "$json_payload")
         if response_ $response; then
             done_ "Milestone updated successfully."
+            return 0
         else
             error_ "Failed to update milestone."
+            return 1
         fi
     else
         error_ "No milestone selected."
+        return 1
     fi
 }
 
 function remove_milestone {
     local proj_="$1"
 
-    local milestones=$(fetch_milestones "$proj_")
-    milestones=$(echo $milestones| jq -r '.[] | "\(.number) \(.title)"' | fzf)
+    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+    if [[ -n "$milestones" ]]; then
+        milestones=$(echo $milestones| jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
+    else
+        error_ "There is no milestones in proj '$proj_'."
+        return 1
+    fi
     
     if [[ -n "$milestones" ]]; then
         local milestone_number=$(echo "$milestones" | awk '{print $1}')
@@ -177,33 +197,45 @@ function remove_milestone {
         
         if response_ $response; then
             done_ "Milestone '$milestone_number' has been removed."
+            return 0
         else
             error_ "Failed to remove milestone '$milestone_number'."
             error_ "Response: $response"
+            return 1
         fi 
     else
         error_ "No milestone selected."
+        return 1
     fi
 }
 
-function set_milestone {
+function attach_milestone {
     local proj_="$1"
     local type="$2"
-    local milestones=$(fetch_milestones "$proj_" | jq -r '.[] | "\(.id) \(.title)"' | fzf)
+    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+    if [[ -n "$milestones" ]]; then
+        local milestones=$(fetch_milestones "$proj_" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+    else
+        error_ "There is no milestones in proj '$proj_'."
+        return 1
+    fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
-        local items=$(fetch_items "$proj_" "$type" | jq -r '.[] | "\(.id) \(.title)"' | fzf --multi)
+        local items=$(fetch_items "$proj_" "$type" | jq -r '.[] | "\(.id) \(.title)"' | fzf --multi $FZF_GEOMETRY)
         if [[ -n "$items" ]]; then
             echo "$items" | while read -r item; do
                 local item_id=$(echo "$item" | awk '{print $1}')
                 update_item_milestone "$proj_" "$type" "$item_id" "$milestone_id"
             done
             done_ "Milestone set for selected items."
+            return 0
         else
             error_ "No items selected."
+            return 1
         fi
     else
         error_ "No milestone selected."
+        return 1
     fi
 }
 
