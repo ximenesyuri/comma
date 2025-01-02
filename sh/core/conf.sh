@@ -14,6 +14,12 @@ YML_HOOKS=${COMMA_YML_HOOKS:-$HOOKS_}
 YML_PIPES=${COMMA_YML_PIPELINES:-$PIPES_}
 YML_PROVIDERS=${COMMA_YML_PROVIDERS:-$PROVIDERS_}
 
+editor_=$(yq e '.globals.editor // ""' $YML_GLOBALS)
+browser_=$(yq e '.globals.browser // ""' $YML_GLOBALS)
+
+EDITOR_="${COMMA_EDITOR:-$(echo $editor_ || $EDITOR || vim)}"
+BROWSER_="${COMMA_BROWSER:-$(echo $browser_ || $BROWSER || firefox)}"
+
 function load_ {
     local key=$2
     if [[ -z "$key" ]]; then

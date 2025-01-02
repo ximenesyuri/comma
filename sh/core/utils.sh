@@ -8,19 +8,17 @@ function deps_ {
     done
 }
 
+function editor_ {
+    local file="$1"
+    echo $EDITOR_
+    if [[ -z "${EDITOR_}" ]]; then
+        error_ 'No suitable editor found.'
+        return 1
+    fi
+    "${EDITOR_}" "$file"
+}
+
 function input_ {
-    function editor_ {
-        local file="$1"
-
-        local editor="${EDITOR:-$(command -v vim || echo 'error: No suitable editor found.')}"
-        if [[ "$editor" == "error:"* ]]; then
-            echo "$editor"
-            return 1
-        fi
-
-        "$editor" "$file"
-    }
-
     local prompt="> "
     local extension="txt"
     local var="_input"
@@ -49,6 +47,7 @@ function input_ {
     local tmp_file
     tmp_file="$(mktemp --suffix=.$extension)"
     local input=""
+    local cursor=0
 
     exec 3<&0
     exec < /dev/tty
@@ -77,20 +76,47 @@ function input_ {
                 break
                 ;;
             $'\x08'|$'\x7f')
-                if [ -n "$input" ]; then
-                    input="${input%?}"
+                if (( cursor > 0 )); then
+                    input="${input:0:cursor-1}${input:cursor}"
+                    ((cursor--))
                     echo -ne "\b \b"
                 fi
                 ;;
-            $'\x1b'|$'\x04') # ESC and Ctrl+D
+            $'\x1b')
+                read -r -s -n2 -t 0.1 rest
+                if [[ -z "$rest" ]]; then
+                    echo
+                    stty echo
+                    exec 0<&3 3<&-
+                    rm -f "$tmp_file"
+                    return 0
+                fi
+                if [[ "$rest" == "[C" ]]; then
+                    if (( cursor < ${#input} )); then
+                        ((cursor++))
+                        echo -ne "\e[C"
+                    fi
+                elif [[ "$rest" == "[D" ]]; then
+                    if (( cursor > 0 )); then
+                        ((cursor--))
+                        echo -ne "\e[D"
+                    fi
+                fi
+                ;;
+            $'\x04') # Ctrl+D
                 echo
                 stty echo
                 exec 0<&3 3<&-
+                rm -f "$tmp_file"
                 return 0
                 ;;
             *)
-                input+="$char"
-                echo -n "$char"
+                input="${input:0:cursor}$char${input:cursor}"
+                ((cursor++))
+                echo -ne "\r${prompt}${input} \r${prompt}"
+                for (( i=0; i<cursor; i++ )); do
+                    echo -ne "\e[C"
+                done
                 ;;
         esac
     done
