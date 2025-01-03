@@ -1,9 +1,10 @@
 function proj_(){
 
-    declare -a SERV_=(dot issue label pr miles prov hook pipe)
+    declare -a SERV_=(git dot issue label pr miles prov hook pipe)
 
     declare -A SERV_ALIASES=(
         [dot]="."
+        [git]="g"
         [issue]="i issues"
         [label]="l labels"
         [pr]="p prs mr mrs pull-request pull-requests merge-request merge-requests"
