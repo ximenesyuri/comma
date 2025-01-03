@@ -49,6 +49,7 @@ function list_issues {
     local name_filter=""
     local desc_filter=""
     local owner_filter=""
+    local assign_filter=""
     
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -68,13 +69,17 @@ function list_issues {
                 owner_filter="$2"
                 shift
                 ;;
+            -a|--assign)
+                assign_filter="$2"
+                shift
+                ;;
             -c|--close)
                 state_filter='state=closed'
                 ;;
             -r|--reopen)
                 state_filter='state=all'
                 ;;
-            -a|--all)
+            --all)
                 state_filter='state=all'
                 ;;
             *)
@@ -99,6 +104,7 @@ function list_issues {
     [[ -n $name_filter ]] && jq_filter+=" | select((.title | test(\"$name_filter\")) // false)"
     [[ -n $desc_filter ]] && jq_filter+=" | select((.body | test(\"$desc_filter\")) // false)"
     [[ -n $owner_filter ]] && jq_filter+=" | select((.user.login | test(\"$owner_filter\")) // false)"
+    [[ -n $assign_filter ]] && jq_filter+=" | select((.assignee.login | test(\"$assign_filter\")) // false)"
 
     local filtered_issues=$(echo "$issues" | jq -c "[$jq_filter]")
 
@@ -115,6 +121,7 @@ function list_issues {
         error_ "No issues selected."
     fi
 }
+
 
 function show_issue {
     local repo_="$1"
@@ -143,9 +150,9 @@ function show_issue {
     local labels=$(echo "$issue_" | jq -r '.labels | map(.name) | join(", ") // "None"')
     local comments_count=$(echo "$issue_" | jq -r '.comments // "0"')
     local body=$(echo "$issue_" | jq -r '.body // "No description available." | @text' | fold_ | sed 's/^/    > /')
+    local assignee=$(echo "$issue_" | jq -r '.assignee.login // "none"')
 
     local comments_json=$(fetch_comments "$repo_" "$prov_" "$number_")
- 
 
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Project:" "$proj_"
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Repo:" "$full_repo"
@@ -158,6 +165,7 @@ function show_issue {
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Creation:" "$created_at"
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Modif:" "$updated_at"
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Labels:" "$labels"
+    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Assignee:" "$assignee"
     printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Comments:" "$comments_count"
     printf "${PRIMARY}%-*s${RESET}\n" $LABEL_WIDTH "Description:"
     echo -e "$body"
@@ -177,6 +185,7 @@ function show_issue {
         done
     fi
 }
+
 
 function fetch_comments {
     local repo_="$1"
@@ -205,9 +214,12 @@ function new_issue {
 
     selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
+    primary_ "Assign:"
+    input_ -v assign_user
+
     local endpoint_=$(get_api "$prov_" ".issues.create.endpoint")
     local method_=$(get_api "$prov_" ".issues.create.method")
-    local json_payload="{\"title\": \"${title}\", \"body\": ${description}, \"labels\": ${selected_labels_json}}"
+    local json_payload="{\"title\": \"${title}\", \"body\": ${description}, \"labels\": ${selected_labels_json}, \"assignee\": \"${assign_user}\"}"
 
     local response=$(call_api "$prov_" "POST" "${endpoint_//:repo/$repo_}" "$json_payload")
 
@@ -233,12 +245,12 @@ function edit_issue {
     local repo_="$1"
     local prov_="$2"
 
-    local endpoint_=$(get_api "$prov_" ".issues.list.endpoint")
-    local method_=$(get_api "$prov_" ".issues.list.method")
-    local issues=$(call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}")
+    local list_endpoint=$(get_api "$prov_" ".issues.list.endpoint")
+    local list_method=$(get_api "$prov_" ".issues.list.method")
+    local issues=$(call_api "$prov_" "$list_method" "${list_endpoint//:repo/$repo_}")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
-        echo "Error fetching issues or no issues available."
+        error_ "Could not fetch issues."
         return 1
     fi
 
@@ -249,16 +261,20 @@ function edit_issue {
         return 1
     fi
 
-    local endpoint_=$(get_api "$prov_" ".issues.update.endpoint")
-    local endpoint_="${endpoint_/:repo/$repo_}"
-    local endpoint_="${endpoint_/:issue_number/$number_}"
-    local method_=$(get_api "$prov_" ".issues.update.method")
+    local update_endpoint=$(get_api "$prov_" ".issues.update.endpoint")
+    update_endpoint="${update_endpoint//:repo/$repo_}"
+    update_endpoint="${update_endpoint//:issue_number/$number_}"
+    local issue=$(call_api "$prov_" "GET" "$update_endpoint")
 
-    local issue=$(call_api "$prov_" "$method_" "$endpoint_")
+    if [[ $? -ne 0 || -z "$issue" || "$(echo "$issue" | jq -r '.message')" == "Not Found" ]]; then
+        error_ "Could not fetch issue details."
+        return 1
+    fi
 
     local current_title=$(echo "$issue" | jq -r '.title // "No Title"')
     local current_body=$(echo "$issue" | jq -r '.body // "No description available."')
-    local current_labels=$(echo "$issue" | jq -r '[.labels[].name] | join(", ") // "null"')
+    local current_labels=$(echo "$issue" | jq -r '[.labels[]?.name] | join(", ") // "null"')
+    local current_assignee=$(echo "$issue" | jq -r '.assignee?.login // ""')
 
     echo -e ${PRIMARY}Title:${RESET} "$current_title"
     primary_ "New Title:"
@@ -272,7 +288,7 @@ function edit_issue {
     new_body=${new_body:-$current_body}
 
     line_
-    echo -e ${PRIMARY}Labels:${RESET} $current_labels
+    echo -e ${PRIMARY}Labels:${RESET} "$current_labels"
     primary_ "New Labels:"
 
     local labels=$(fetch_labels "$repo_" "$prov_")
@@ -280,16 +296,33 @@ function edit_issue {
     local selected_labels=$(echo "$label_names" | fzf --multi $FZF_GEOMETRY)
     local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')  
 
-    local data_="{\"title\": \"$new_title\", \"body\": $new_body, \"labels\": $selected_labels_json}"
-    local response=$(call_api "$prov_" "$method_" "$endpoint_" "$data_")
+    line_
+    echo -e ${PRIMARY}Assignee:${RESET} "$current_assignee"
+    primary_ -c "Assignee:" -n "(leave blank to unassign)"
+    input_ -v new_assignee
 
-    if response_ $response; then 
+    local json_assignee_value="null"
+    if [[ -n "$new_assignee" ]]; then
+        json_assignee_value="\"$new_assignee\""
+    fi
+
+    local data_=$(jq -n \
+        --arg title "$new_title" \
+        --arg body "$new_body" \
+        --argjson labels "$selected_labels_json" \
+        --argjson assignee "$json_assignee_value" \
+        '{title: $title, body: $body, labels: $labels, assignee: $assignee}')
+
+    local response=$(call_api "$prov_" "PATCH" "$update_endpoint" "$data_")
+
+    if response_ "$response"; then 
         done_ "The issue has been edited."
     else
         error_ "Failed to edit the issue."
         error_ "Response: $response"
-    fi 
+    fi
 }
+
 
 function change_state {
     local repo_="$1"

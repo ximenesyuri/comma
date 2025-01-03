@@ -7,9 +7,21 @@ function call_api {
     local method=$2
     local endpoint=$3
     local data=$4
+    local body_entries=$5
 
     local base_url=$(get_api "$provider" ".base_url")
     local version=$(get_api "$provider" ".version")
+
+    local json_body=""
+    if [[ -n "$body_entries" ]]; then
+        json_body=$(jq -n "$body_entries")
+    fi
+
+    if [[ -n "$data" && -n "$json_body" ]]; then
+        json_body=$(echo "$json_body" | jq --argjson data "$data" '. + $data')
+    elif [[ -n "$data" ]]; then
+        json_body="$data"
+    fi
 
     case $provider in
         github)
@@ -20,23 +32,34 @@ function call_api {
             response=$(curl -s -X "$method" \
                 -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
-                -d "$data" \
+                -d "$json_body" \
                 "$base_url/$endpoint")
             ;;
         gitlab)
             local token="$GITLAB_TOKEN"
-            response=$(curl -s -X "$method" -H "PRIVATE-TOKEN: $token" -d "$data" "$base_url/$version/$endpoint")
+            response=$(curl -s -X "$method" \ 
+                -H "PRIVATE-TOKEN: $token"  \ 
+                -d "$json_body" \ 
+                "$base_url/$version/$endpoint")
             ;;
         gitea)
             local token="$GITEA_TOKEN"
-            response=$(curl -s -X "$method" -H "Authorization: token $token" -d "$data" "$base_url/$version/$endpoint")
+            response=$(curl -s -X "$method" \ 
+                -H "Authorization: token $token" \ 
+                -d "$json_body" \
+                "$base_url/$version/$endpoint")
+            ;;
+        bitbucket)
+            response=$(curl -s -X "$method" \ 
+                -u "$BITBUCKET_USERNAME:$BITBUCKET_TOKEN"  \ 
+                -d "$json_body" "$base_url/$endpoint")
             ;;
         *)
-            echo "error: Unsupported provider '$provider'."
+            error_ "Provider '$provider' is not supported."
             return 1
             ;;
     esac
-    
+
     if echo "$response" | jq empty 2>/dev/null; then
         echo "$response"
     else
