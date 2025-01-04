@@ -57,11 +57,12 @@ function git_add {
 
 function git_commit {
     local proj="$1"
-    local message="$2"
+    shift
+    local message="$@"
     
     if [[ -z "$message" ]]; then
         primary_ "Enter commit message:"
-        read -p "> " message
+        input_ -v  message
         if [[ -z "$message" ]]; then
             error_ "Commit message required."
             return 1
@@ -110,7 +111,7 @@ function git_amend {
     
     if [[ -n "$commit_id" ]]; then
         primary_ "New message:"
-        read -p "> " new_message
+        input_ -v new_message
         git commit --amend -m "$new_message" --no-edit
         if [[ ! "$?" == "0" ]]; then
             return 1
@@ -125,7 +126,7 @@ function git_log {
     local proj="$1"
     
     local commit
-    commit=$(git log --oneline | fzf --height=40% --layout=reverse --ansi --preview="git show --stat {}" | awk '{print $1}')
+    commit=$(git log --oneline | fzf $FZF_GEOMETRY | awk '{print $1}')
     if [ -z "$commit" ]; then
         error_ "No commit selected."
         return 1
@@ -268,5 +269,3 @@ function git_diff {
         error_ "No commit selected."
     fi
 }
-
-
