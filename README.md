@@ -1,10 +1,12 @@
 # About
 
-`g`  is a universal CLI tool to manage git providers, as Github, Gitlab and Gitea, made with `bash`, `yaml` and `fzf`, to work as a lightweight replacement for the core functionalities of [gh](https://github.com/cli/cli), [glab](https://gitlab.com/gitlab-org/cli), [tea](https://gitea.com/gitea/tea), and so on. It also allows to create custom `bash` pipelines for git projects, allowing to work, for example, as a git hooks tool.
+`comma`  is a universal CLI tool to manage git providers, as [Github](https://github.com), [Gitlab](https://gitlab.com), [Gitea](https://gitea.com) and [Bitbucket](https://bitbucket.org/product/), made with `bash` and configurable in `yaml`, to work as:
+1. an intuitive and lightweight replacement for the core functionalities of [gh](https://github.com/cli/cli), [glab](https://gitlab.com/gitlab-org/cli), [tea](https://gitea.com/gitea/tea), and so on
+2. a custom `bash` pipelines manager, allowing to work, for example, as a git hooks or CI/CD tool.
 
 # Features
 
-- Structure:
+- **Structure**:
     1. Unified project management
     2. Project focused 
     4. Multiple configuration levels:
@@ -17,24 +19,24 @@
     7. Completion script
     8. Lightweight with minimal dependencies
     9. Easy to install: just plug and play
-- Management:
+- **Management**:
     1. Execute basic git commands remotely
     2. Handle issues, labels, milestones, PRs/MRs, and so on, in the different platforms, as:
-        1. Github
-        2. Gitlab (including self-hosted instances)
-        3. Gitea (including instances, as Codeberg or self-hosted)
-        4. Bitbucket
+        1. [Github](https://github.com)
+        2. [Gitlab](https://gitlab.com) (including self-hosted instances)
+        3. [Gitea](https://gitea.com) (including instances, as [Codeberg](https://codeberg.org/) or self-hosted)
+        4. [Bitbucket](https://bitbucket.org/product/)
     3. Define global or per project `bash` pipelines
     4. Execute pipelines remotely
 
 # Dependencies
 
-- Mandatory:
-    1. bash: the interpreter
+- **Mandatory**:
+    1. `bash`: the interpreter
     2. [fzf](https://github.com/junegunn/fzf): to provide nice user experience
     3. [jq](https://github.com/jqlang/jq): to manage API calls
     4. [yq](https://github.com/mikefarah/yq): to handle configuration files
-- Optional:
+- **Optional**:
     1. `curl`: to install dependencies with the `install` script (see below)
     2. `ssh`: to connect to remotes 
 
@@ -66,4 +68,10 @@ See [doc/usage](./doc/usage.md).
 
 See [doc/conf](./doc/conf.md).
 
+# See also
+
+Other tools made with `bash` and `yaml` configurable:
+
+1. [dot](https://github.com/ximenesyuri/dot): a universal terminal utility
+2. [web](https://github.com/ximenesyuri/web): a terminal tool to manage bookmarks and search across (software development related) search engines 
 
