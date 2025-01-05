@@ -45,18 +45,18 @@
     2. clone the repository `ximenesyuri/comma`
     3. source the `comma` script in your `.bashrc` file
 ```bash
-    git clone https://github.com/ximenesyuri/comma /your/favorite/location/comma \
-    echo "source /your/favorite/location/comma/comma" >> $HOME/.bashrc
+    git clone https://github.com/ximenesyuri/comma /your/favorite/location/comma && \
+        echo "source /your/favorite/location/comma/comma" >> $HOME/.bashrc
 ```
 - Script:
     1. clone the repository
     2. execute the `install` script
 ```bash
-    git clone https://github.com/ximenesyuri/comma /your/favorite/location/comma \
-    sudo sh /your/favorite/location/comma/install
+    git clone https://github.com/ximenesyuri/comma /your/favorite/location/comma && \
+        sudo bash /your/favorite/location/comma/install
 ```
 
-> The missing dependencies are automatically be installed with the `install` script.
+> The missing dependencies will be automatically installed with the `install` script.
 
 # Usage
 
