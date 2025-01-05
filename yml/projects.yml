@@ -1,5 +1,11 @@
 projects:
   f:
+    settings:
+      editor:
+      browser:
+      default:
+      dot:
+
     local:
       metadata:
         name:
