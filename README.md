@@ -53,7 +53,7 @@
     2. execute the `install` script
 ```bash
     git clone https://github.com/ximenesyuri/comma /your/favorite/location/comma \
-        sudo sh /your/favorite/location/comma/install
+    sudo sh /your/favorite/location/comma/install
 ```
 
 > The missing dependencies are automatically be installed with the `install` script.
