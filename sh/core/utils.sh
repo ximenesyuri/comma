@@ -1,8 +1,25 @@
+function get_(){
+    case "$1" in
+        global|globals)
+            yq e '.globals | keys | .[]' "$YML_GLOBALS" ;;
+        prj|projs|projects)
+            yq e '.projects | keys | .[]'  "$YML_PROJECTS" ;;
+        hook|hooks)
+            yq e '.hooks | keys | .[]'  "$YML_HOOKS" ;;
+        pipe|pipes|pipeline|pipelines)
+            yq e '.pipelines | keys | .[]'  "$YML_PIPES" ;;
+        prov|provider|providers)
+            yq e '.providers | keys | .[]'  "$YML_PROVIDERS" ;;
+        *)
+            error_ "invalid option for 'get_()' function" ;;
+    esac    
+}
+
 function deps_ {
     local dependencies=("curl" "fzf" "yq" "jq")
     for cmd in "${dependencies[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
-            echo "error: '$cmd' is not installed. Please install it before using this script."
+            error_ "Missing dependency '$cmd'."
             return 1
         fi
     done
@@ -10,7 +27,6 @@ function deps_ {
 
 function editor_ {
     local file="$1"
-    echo $EDITOR_
     if [[ -z "${EDITOR_}" ]]; then
         error_ 'No suitable editor found.'
         return 1

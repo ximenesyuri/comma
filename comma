@@ -1,14 +1,12 @@
 #! /bin/bash
 
 function comma {
-    source ${BASH_SOURCE%/*}/sh/core/style.sh
+    source ${BASH_SOURCE%/*}/sh/core/envs.sh
+    source ${BASH_SOURCE%/*}/sh/core/theme.sh
     source ${BASH_SOURCE%/*}/sh/core/log.sh
     source ${BASH_SOURCE%/*}/sh/core/utils.sh
     source ${BASH_SOURCE%/*}/sh/core/help.sh
-
-    YML_API=${BASH_SOURCE%/*}/src/yml/api.yml 
     source ${BASH_SOURCE%/*}/sh/core/api.sh
-    source ${BASH_SOURCE%/*}/sh/core/conf.sh
 
     declare -a OBJ_=("proj" "prov" "pipe" "hook")
     for obj in ${OBJ_[@]}; do
