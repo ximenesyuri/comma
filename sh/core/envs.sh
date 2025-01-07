@@ -5,16 +5,9 @@ local main_=${dir_%/*}
 YML_API=${main_}/src/yml/api.yml
 
 local YML_=$main_/yml
-local YML_CAT=$YML_/cat
+
 local YML_CONF=$YML_/conf.yml
 local YML_LOCAL=$YML_/local.yml
-
-YML_PROJECTS=$YML_CAT/projects.yml
-YML_PROVIDERS=$YML_CAT/providers.yml
-YML_HOOKS=$YML_CAT/hooks.yml
-YML_PIPES=$YML_CAT/pipes.yml
-YML_TEAMS=$YML_CAT/teams.yml
-YML_RESOURCES=$YML_CAT/resources.yml
 
 local editor_=$(yq e '.conf.tools.editor // ""' $YML_CONF)
 local browser_=$(yq e '.conf.tools.browser // ""' $YML_CONF)
@@ -93,6 +86,7 @@ done
 
 CATS_=($(yq e '.conf.catalogs | keys | .[]' $YML_CONF))
 PROJS_=($(yq e '.local | keys | .[]' $YML_LOCAL))
+CAT_PROJS=($(yq e '.local | keys | .[]' $YML_LOCAL))
 
 default_cats=($(yq e '.conf.catalogs | to_entries | map(select(.value.default == true)) | .[].key' $YML_CONF))
 if [[ -n "${default_cats[0]}" ]]; then
@@ -102,5 +96,19 @@ if [[ -n "${default_cats[0]}" ]]; then
         return 1
     else
         CAT_="${default_cats[0]}"
+        local CAT_PATH="$(yq e ".conf.catalogs.$CAT_.path // \"\"" $YML_CONF | envsubst)"
+        if [[ -n "$CAT_PATH" ]]; then
+            YML_CAT=$CAT_PATH
+            YML_PROJECTS=$YML_CAT/projects.yml
+            YML_PROVIDERS=$YML_CAT/providers.yml
+            YML_HOOKS=$YML_CAT/hooks.yml
+            YML_PIPES=$YML_CAT/pipes.yml
+            YML_TEAMS=$YML_CAT/teams.yml
+            YML_RESOURCES=$YML_CAT/resources.yml
+        else
+            error_ "Path not set for the default catalog '$CAT_'."
+            info_ "See '.conf.catalogs.$CAT_.path' in '$YML_CONF'."
+            return 1
+        fi
     fi
 fi
