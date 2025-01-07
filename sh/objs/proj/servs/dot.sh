@@ -5,17 +5,6 @@ function dot_() {
         error_ "'.projects.${proj_name}.local.path' is not set in '$YML_PROJECTS'."
         return 1
     fi
-    local local_dot=$(yq e ".projects.${proj_name}.spec.dot" "$YML_PROJECTS")
-    local global_dot=$(yq  e ".globals.dot" "$YML_GLOBALS")
-    local DOT_=${COMMA_DOT:-cd}
-    if [[ -z "$local_dot" || "$local_dot" == "null" ]]; then
-        if [[ -z "$global_dot" || "$global_dot" == "null" ]]; then
-            "${DOT_}" "$path"
-        else
-            "$local_dot" "$path"
-        fi
-    else
-        "$global_dot" "$path"
-    fi 
+    eval "\"$DOT_\" \"$path\""
 }
 

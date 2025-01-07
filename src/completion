@@ -29,7 +29,9 @@ function _comma_compl_prj(){
 function _comma_compl() {
     local dir_=${BASH_SOURCE%/*}
     local main_=${dir_%/*}
-    source $main_/sh/core/conf.sh
+    source $main_/sh/core/envs.sh
+    prjs=($(yq e '.projects | keys | .[]'  "$YML_PROJECTS"))
+    cmds=("help" "new" "rm" "ls" "info")
     local commands projects topics
 
     function prev(){
@@ -45,9 +47,6 @@ function _comma_compl() {
             echo "error: wrong entry for 'pos()'"
         fi
     } 
-
-    cmds=("help" "new" "rm" "ls" "info")
-    prjs=($(get_ projects))
 
     sugg=()
     if [[ $COMP_CWORD -eq 1 ]]; then
