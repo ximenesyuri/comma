@@ -34,6 +34,16 @@ function editor_ {
     "${EDITOR_}" "$file"
 }
 
+function browser_() {
+    local url="$1"
+    if [[ -z "$BROWSER_" ]]; then
+        error_ "No suitable browser found."
+        return 1
+    fi
+    "$BROWSER_" "$url"
+}
+
+
 function input_ {
     local prompt="> "
     local extension="txt"

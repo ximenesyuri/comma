@@ -1,0 +1,20 @@
+local:
+  f:
+    metadata:
+      name:
+      desc:
+      tags:
+        - tag 1
+        - tag 2
+    spec:
+      path: $YX_DEV/f/general
+
+  comma:
+    metadata:
+      name:
+      desc:
+      tags:
+        - tag 1
+        - tag 2
+    spec:
+      path: $YX_DEV/sh/comma

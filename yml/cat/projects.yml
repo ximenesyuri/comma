@@ -1,0 +1,54 @@
+projects:
+  f:
+    metadata:
+      name:
+        desc:
+        tags:
+          - tag 1
+          - tag 2        
+
+    spec:
+      provider: github
+      repo: f-utils/general
+      services:
+        issues: true
+        labels: true
+        miles: true
+        prs: true
+      relations:
+        owner: some_team
+        resources:
+          - resource_A
+          - resource_B
+        dependencies:
+          - project_A
+          - project_B
+      commands:
+        hooks:
+          ...
+        pipelines:
+          ...
+        custom:
+          ...
+
+  termyx: 
+    spec:
+      provider: github
+      repo: ximenesyuri/termyx
+      services:
+        issues: true  
+
+  comma: 
+    spec:
+      provider: github
+      repo: ximenesyuri/comma
+      services:
+        issues: true 
+
+  ideas: 
+    spec:
+      provider: github
+      repo: ximenesyuri/ideas
+      services:
+        issues: true
+

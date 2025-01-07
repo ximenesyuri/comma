@@ -4,13 +4,13 @@ function issue_ {
     local proj_str=".projects.$proj_"
     shift 2 
 
-    if [[ $(yq e "$proj_str.server.spec.services.issues" $YML_PROJECTS) != "true" ]]; then
+    if [[ $(yq e "$proj_str.spec.server.services.issues" $YML_PROJECTS) != "true" ]]; then
         error_ "Project '$proj_' does not support issues."
         return 2
     fi
 
-    local repo_=$(yq e "$proj_str.server.spec.repo"  $YML_PROJECTS)
-    local prov_=$(yq e "$proj_str.server.spec.provider" $YML_PROJECTS)
+    local repo_=$(yq e "$proj_str.spec.server.repo"  $YML_PROJECTS)
+    local prov_=$(yq e "$proj_str.spec.server.provider" $YML_PROJECTS)
 
     case "$act_" in
         new|n)
@@ -31,6 +31,18 @@ function issue_ {
             ;;
         edit|e)
             edit_issue "$repo_" "$prov_"
+            ;;
+        browse|b)
+            dir_=${BASH_SOURCE%/*}
+            dir_=${dir%_/*}
+            source $dir/utils/url.sh
+            browse_issue "$repo_" "$prov_"  
+            ;;
+        Browse|BROWSE|B)
+            dir_=${BASH_SOURCE%/*}
+            dir_=${dir%_/*}
+            source $dir/utils/url.sh
+            BROWSE_issue "$repo_" "$prov_"
             ;;
         *)
             error_ "Issue actions: 'new', 'ls', 'close', 'reopen', 'edit'."
@@ -374,3 +386,25 @@ function change_state {
         fi 
     done
 }
+
+function browse_issue() {
+    local repo_="$1"
+    local prov_="$2"
+    local url=$(url_ "issue" "$prov_" "$repo_" )
+    browser_ "$url"
+}
+
+function BROWSE_issue() {
+    local repo_="$1"
+    local prov_="$2"
+    local issues=$(list_issues "$repo" "$provider")
+    local selection_=$(echo "$issues" | fzf $FZF_GEOMETRY --inline-info)  
+    if [[ -n "$selection_" ]]; then
+        local url=$(url_ "issue" "$prov_" "$repo_" "$selection_" )
+        browser_ "$url"
+    else
+        error_ "No issue selected."
+    fi  
+}
+
+

@@ -8,29 +8,28 @@ function comma {
     source ${BASH_SOURCE%/*}/sh/core/help.sh
     source ${BASH_SOURCE%/*}/sh/core/api.sh
 
-    declare -a OBJ_=("proj" "prov" "pipe" "hook")
+    declare -a OBJ_=("proj" "cat")
     for obj in ${OBJ_[@]}; do
-        eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj/$obj.sh"
-        eval "ACT_${obj^^}=${BASH_SOURCE%/*}/sh/objs/$obj/act.sh"
-    done
-    
-    if [[ -n "${G_DEFAULT_OBJECT}" ]]; then
-        if [[ ${OBJ_[@]} =~ "${G_DEFAULT_OBJECT}" ]]; then
-            local DEFAULT_OBJ=${G_DEFAULT_OBJECT}
-        else
-            error_ "Error in env 'G_DEFAULT_OBJECT': '$G_DEFAULT_OBJECT' is not a valid object."
-            return 1
-        fi
-    else
-       local DEFAULT_OBJ="proj"
-    fi
-    
+        eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/$obj/$obj.sh"
+        eval "ACT_${obj^^}=${BASH_SOURCE%/*}/sh/$obj/act.sh"
+    done 
+
     declare -A OBJ_ALIASES=(
-        [proj]="p pj prj project projects"
-        [prov]="P pv pvd prv provider providers"
-        [pipe]="pp pipeline pipelines"
-        [hook]="h hk hooks"
+        [proj]="p prj prjs projs project projects"
+        [cat]="c cats catalog catalogs"
     )
+
+    if [[ -n "${COMMA_DEFAULT_OBJ}" ]]; then
+        if [[ ${OBJS_[@]} =~ "${COMMA_DEFAULT_OBJ}" ]]; then
+            local DEFAULT_OBJ=${COMMA_DEFAULT_OBJ}
+        else
+            error_ "Error in env 'COMMA_DEFAULT_OBJECT': '$COMMA_DEFAULT_OBJECT' is not a valid object."
+            info_ "Available objects: ${OBJ_[*]}"
+            return 1
+        fi 
+    else
+        DEFAULT_OBJ="proj"
+    fi
 
     declare -a ACT_=(list new remove edit info help)
 
@@ -38,7 +37,7 @@ function comma {
         [list]="l ls"
         [new]="n c create"
         [remove]="r rm d del delete"
-        [info]="i"
+        [info]="i inf"
         [edit]="e ed"
         [help]="h --help -h"
     )
@@ -66,6 +65,7 @@ function comma {
             if [[ -z "$2" ]]; then
                 shift 1
                 local act_="ACT_${DEFAULT_OBJ^^}"
+                source ${!act_}
                 "${act}"_"${DEFAULT_OBJ}" "$@"
                 if [[ ! "$?" == "0" ]]; then
                     return 1

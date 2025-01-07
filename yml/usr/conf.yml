@@ -1,7 +1,0 @@
-conf:
-  browser: firefox
-  editor: vim
-  main: cd
-  dot: cd
-  theme:
- 

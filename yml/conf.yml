@@ -1,0 +1,19 @@
+conf:
+  general:
+    theme:
+  catalogs:
+    main:
+      default: true
+      path: $YX_DEV/sh/comma/yml/cat
+    other:
+      default: false
+      path: $YX_DEV/sh/comma/yml/cat
+  tools:
+    browser: firefox
+    editor: vim
+    pager: 
+  commands:
+    main: cd
+    dot: cd
+
+ 

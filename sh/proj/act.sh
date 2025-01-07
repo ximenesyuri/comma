@@ -7,14 +7,11 @@ function open_proj(){
     fi
 }
 
-
 function list_proj {
-    local projects
-    projects=$(get_ projects)
-    if [[ -n "${projects}" ]]; then
+    if [[ -n "${PROJS_[@]}" ]]; then
         echo "Projects:"
-        echo "$projects" | while read -r project; do
-            echo "- $project"
+        for proj in ${PROJS_[@]}; do
+            echo "- $proj" 
         done
     else
         echo "No projects found."

@@ -3,8 +3,8 @@ function pr_ {
     local act="$2"
     shift 2
 
-    local repo=$(yq e ".projects.$proj.server.spec.repo" "$YML_PROJECTS")
-    local provider=$(yq e ".projects.$proj.server.spec.provider" "$YML_PROJECTS")
+    local repo=$(yq e ".projects.$proj.spec.server.repo" "$YML_PROJECTS")
+    local provider=$(yq e ".projects.$proj.spec.server.provider" "$YML_PROJECTS")
 
     case "$act" in        
         l|ls|list)
@@ -101,7 +101,7 @@ function edit_pr {
 function approve_pr {
     local repo="$1"
     local provider="$2"
-    local selections=$(list_prs "$repo" "$provider" "open")
+    local selections=$(list_pr "$repo" "$provider" "open")
     echo "$selections" | fzf --multi $FZF_GEOMETRY | awk '{print $1}' | while read -r number; do
         local endpoint=$(get_api "$provider" ".prs.approve.endpoint")
         local method=$(get_api "$provider" ".prs.approve.method")
@@ -118,7 +118,7 @@ function approve_pr {
 function disapprove_pr {
     local repo="$1"
     local provider="$2"
-    local selections=$(list_prs "$repo" "$provider" "open")
+    local selections=$(list_pr "$repo" "$provider" "open")
     echo "$selections" | fzf --multi $FZF_GEOMETRY | awk '{print $1}' | while read -r number; do
         local endpoint=$(get_api "$provider" ".prs.disapprove.endpoint")
         local method=$(get_api "$provider" ".prs.disapprove.method")
@@ -135,7 +135,7 @@ function disapprove_pr {
 function close_pr {
     local repo="$1"
     local provider="$2"
-    local selections=$(list_prs "$repo" "$provider" "open")
+    local selections=$(list_pr "$repo" "$provider" "open")
     echo "$selections" | fzf --multi $FZF_GEOMETRY | awk '{print $1}' | while read -r number; do
         local endpoint=$(get_api "$provider" ".prs.update.endpoint")
         local json_payload="{\"state\": \"closed\"}"
@@ -152,7 +152,7 @@ function close_pr {
 function open_pr {
     local repo="$1"
     local provider="$2"
-    local selections=$(list_prs "$repo" "$provider" "closed")
+    local selections=$(list_pr "$repo" "$provider" "closed")
     echo "$selections" | fzf --multi $FZF_GEOMETRY | awk '{print $1}' | while read -r number; do
         local endpoint=$(get_api "$provider" ".prs.update.endpoint")
         local json_payload="{\"state\": \"open\"}"
@@ -182,3 +182,25 @@ function list_pr {
 
     echo "$prs" | jq -r '.[] | "\(.number) \(.title)"'
 }
+
+function BROWSE_pr() {
+    local repo_="$1"
+    local prov_="$2"
+    local url=$(url_ "issue" "$prov_" "$repo_" )
+    browser_ "$url"
+}
+
+function browse_pr() {
+    local repo_="$1"
+    local prov_="$2"
+    local prs=$(list_pr "$repo" "$provider")
+    local selection_=$(echo "$prs" | fzf $FZF_GEOMETRY --inline-info)
+    local id_=$(echo "$selection_" | awk '{print $1}')
+    if [[ -n "$id_" ]]; then
+        local url=$(url_ "pr" "$prov_" "$repo_" "$id_")
+        browser_ "$url"
+    else
+        error_ "No pr selected."
+    fi
+}
+
