@@ -20,24 +20,93 @@ Object configurations applies to `comma` objects and need to be shared between t
 
 > Environment variables can control only user settings. Object configuration are set only via config files.
 
-# Files
+# Structure
 
-Let us focus first in described the files involved in the configuration of `comma`.
+`comma` uses envs do determine its directory structure. These are the *structural envs*.
+```
+env                description                    default value
+---------------------------------------------------------------------------------------
+COMMA              installation path              $XDG_CONFIG_HOME || $HOME/.config
+COMMA_DOC          dir w/ docs                    $COMMA/doc
+COMMA_SH_CORE      dir w/ core scripts            $COMMA/sh/core
+COMMA_SH_OBJS      dir w/ objects scripts         $COMMA/sh/objs
+COMMA_SRC_YML      dir w/ inner 'yml' files       $COMMA/src/yml
+COMMA_SRC_TPL      dir w/ template files          $COMMA/src/tpl
+COMMA_SRC_THEMES   dir w/ pre-defined themes      $COMMA/src/themes
+```
 
-## Dir
+# User
 
-By default, `comma` reads for configuration in files in the directory `$COMMA/yml`, where `$COMMA` is the installation path of comma. Actually, it looks to the following subdirectories:
-1. `$COMMA/yml/obj`: for object configuration
-2. `$COMMA/yml/usr`: for user settings
+There are two files involved in user configuration:
+1. `conf.yml`: with local settings
+2. `theme files`: with custom themes definition files
 
-> You can use the envs `COMMA_CONF`, `COMMA_CONF_OBJ` and `COMMA_CONF_USR` to set different config directories for `comma`. 
-> 1. if `COMMA_CONF` is set but the others are not, it will automatically set 
->   1. `COMMA_CONF_OBJ=$COMMA_CONF/obj`
->   2. `COMMA_CONF_USR=$COMMA_CONF/usr`
-> 2. if `COMMA_CONF` is not set, but the others are, them `comma` will look to the directories defined by them
-> 3. if all the envs are set, the `COMMA_CONF` will be ignored
+Its locations are set by the following envs.
 
-## Objects
+```
+env                 description                    default value
+-------------------------------------------------------------------------------
+COMMA_CONF          path to yml conf file          $COMMA/yml/conf.yml
+COMMA_THEMES        dir w/ custom themes           $COMMA/yml/themes
+```
+
+## Conf
+
+The `conf.yml` file uses the following schema:
+
+```yaml
+conf:
+    general:
+        <key>: <value>
+    commands:
+        <key>: <value>
+    custom:
+        <key>: <value>
+        
+        
+```
+
+The available keys and the expected pattern of the values are:
+
+``` 
+key                  description                        value         default
+----------------------------------------------------------------------------------
+general.editor       editor to open files               string         $EDITOR
+general.browser      browser to open urls               string         $BROWSER
+general.pager        pager to view files                string         $PAGER
+commands.main        main command to default object     string         cd
+commands.dot         dot command                        string         cd
+custom:              custom commands                    array          null
+```
+
+The `.conf.general`  and `.conf.commands` can be overwrite by envs, as follows:
+
+```
+key                  env
+---------------------------------------------
+general.editor       COMMA_GENERAL_EDITOR
+general.browser      COMMA_GENERAL_BROWSER
+general.pager        COMMA_GENERAL_PAGER
+commands.main        COMMA_COMMANDS_MAIN
+commands.dot         COMMA_COMMANDS_DOT
+```
+
+## Themes
+
+The `theme.yml` files uses the following schema:
+
+```yaml
+theme:
+    metadata:
+        <key>: <entry>
+    spec:
+        colors:
+            <key>: <entry>
+        structure:
+            <key>: <entry>
+```
+
+# Objects
 
 Recall that `comma` manage the following objects:
 1. projects 
@@ -55,10 +124,9 @@ Each object has its owns `yml` configuration file:
 5. `teams.yml`
 6. `resources.yml`
 
-> You can overwrite the default location `comma/yml` by setting the env `COMMA_CONF` with your custom directory. In this case, `comma` will look at:
-> 1. `$COMMA_CONF/projects.yml`
-> 2. `$COMMA_CONF/providers.yml`
-> 3. and so on
+The default location of object configuration is the subdir `$COMMA/yml/obj`. You can overwrite the above locations by setting the envs `COMMA_YML` and `COMMA_OBJ`.
+
+> If `COMMA_YML` is set but `COMMA_OBJ` is not, then `COMMA_OBJ` is supposed to be `${COMMA_YML}/obj`.
 
 ## Schema
 
@@ -68,14 +136,25 @@ Each `yaml` file has its own `yaml` schema. However, all of them share the same 
 objects_name: ............... projects, providers, pipelines or hooks
     some_object: ............ some object label
         metadata: ........... with catalog info
-            ...
+            <key>: <entry>
         spec: ............... with specific entries, depending on the type
+            <key>: <entry>
+```
+
+For example, in the case of a project:
+
+```yaml
+projects:
+    my_project:
+        metadata:
+            ...
+        spec:
             ...
 ```
 
-## Globals
+## User
 
-Among the object configuration files above, there are the `globals.yml` file. The cond
+Among the object configuration files above, there are the user configuration files.
 
 # Project Configuration
 
