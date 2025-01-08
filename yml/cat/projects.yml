@@ -43,6 +43,7 @@ projects:
       repo: ximenesyuri/comma
       services:
         issues: true 
+        miles: true
 
   ideas: 
     spec:

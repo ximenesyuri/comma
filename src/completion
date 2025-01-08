@@ -29,9 +29,9 @@ function _comma_compl() {
     local dir_=${BASH_SOURCE%/*}
     local main_=${dir_%/*}
     source $main_/sh/core/envs.sh
-    prjs=($(yq e '.projects | keys | .[]'  "$YML_PROJECTS"))
-    cmds=("help" "new" "rm" "ls" "info")
-    local commands projects topics
+    local prjs=($(yq e '.projects | keys | .[]'  "$YML_PROJECTS"))
+    local objs=("local" "cat")
+    local helps=("-h" "--help")
 
     function prev(){
         if [[ -z "$1" ]]; then
@@ -49,7 +49,7 @@ function _comma_compl() {
 
     sugg=()
     if [[ $COMP_CWORD -eq 1 ]]; then
-        sugg="${cmds[*]} ${prjs[*]}"
+        sugg="${objs[*]} ${prjs[*]} ${helps[*]}"
     elif [[ "${prjs[@]}" =~ "$(prev 1)" ]]; then
         sugg=($(_comma_compl_prj $(prev 1)))
     elif [[ "${prjs[@]}" =~ "$(prev 2)" ]]; then

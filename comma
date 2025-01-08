@@ -8,39 +8,15 @@ function comma {
     source ${BASH_SOURCE%/*}/sh/core/help.sh
     source ${BASH_SOURCE%/*}/sh/core/api.sh
 
-    declare -a OBJ_=("proj" "cat")
+    declare -a OBJ_=("local" "cat")
     for obj in ${OBJ_[@]}; do
         eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/$obj/$obj.sh"
-        eval "ACT_${obj^^}=${BASH_SOURCE%/*}/sh/$obj/act.sh"
     done 
 
     declare -A OBJ_ALIASES=(
-        [proj]="p prj prjs projs project projects"
+        [local]="l loc locs locals"
         [cat]="c cats catalog catalogs"
-    )
-
-    if [[ -n "${COMMA_DEFAULT_OBJ}" ]]; then
-        if [[ ${OBJS_[@]} =~ "${COMMA_DEFAULT_OBJ}" ]]; then
-            local DEFAULT_OBJ=${COMMA_DEFAULT_OBJ}
-        else
-            error_ "Error in env 'COMMA_DEFAULT_OBJECT': '$COMMA_DEFAULT_OBJECT' is not a valid object."
-            info_ "Available objects: ${OBJ_[*]}"
-            return 1
-        fi 
-    else
-        DEFAULT_OBJ="proj"
-    fi
-
-    declare -a ACT_=(list new remove edit info help)
-
-    declare -A ACT_ALIASES=(
-        [list]="l ls"
-        [new]="n c create"
-        [remove]="r rm d del delete"
-        [info]="i inf"
-        [edit]="e ed"
-        [help]="h --help -h"
-    )
+    ) 
     
     deps_ || return 1
 
@@ -55,56 +31,41 @@ function comma {
        [[ -z "$2" ]]; then
         help_
         return 0
-    fi 
-
-    for act in ${ACT_[@]}; do
-        declare -a aliases=(${ACT_ALIASES[$act]})
-        local match_act=0
-        if [[ "${aliases[@]}" =~ "$1" ]] ||
-           [[ "$1" == "$act" ]]; then
-            if [[ -z "$2" ]]; then
-                shift 1
-                local act_="ACT_${DEFAULT_OBJ^^}"
-                source ${!act_}
-                "${act}"_"${DEFAULT_OBJ}" "$@"
+    fi
+    local match_obj=""
+    for obj in ${OBJ_[@]}; do
+        declare -a aliases=(${OBJ_ALIASES[$obj]})
+        for alias in "${aliases[@]}"; do
+            if [[ "${alias}" == "$1" ]] ||
+               [[ "$1" == "$obj" ]]; then
+                match_obj="true"
+                shift 
+                "${obj}_" "$@"
                 if [[ ! "$?" == "0" ]]; then
                     return 1
                 fi
                 return 0
-            else
-                local match_obj=0
-                for obj in ${OBJ_[@]}; do
-                    local aliases=(${OBJ_ALIASES[$obj]})
-                    if [[ "${aliases[@]}" =~ "$2" ]] ||
-                       [[ "$2" == "obj" ]]; then
-                        shift 2
-                        local act_="ACT_${obj^^}"
-                        source ${!act_}
-                        "${act}"_"${obj}" "$@"
-                        if [[ ! "$?" == "0" ]]; then
-                            return 1
-                        fi
-                        return 0
-                    fi
-                done
             fi
-            if [[ $match_obj -eq 0 ]]; then
-                error_ "Available objects: ${OBJ_[*]}"
+        done
+    done 
+    match_proj=""
+    for proj in "${CAT_PROJS[@]}"; do
+        if [[ "$proj" == "$1" ]]; then
+            match_proj="true"
+            source "${BASH_SOURCE%/*}/sh/proj/proj.sh"
+            proj_ "$@"
+            if [[ ! "$?" == "0" ]]; then
                 return 1
-            fi 
+            fi
+            return 0
         fi
     done
 
-    projs=($(get_ projects))
-
-    if [[ "${projs[@]}" =~ "$1" ]]; then
-        local main_=MAIN_PROJ
-        source ${!main_}
-        proj_ "$@"
-    else 
-        error_ "Available actions: ${ACT_[*]}"
-        error_ "Available projects: ${projs[*]}"
+    if [[ -z "$match_obj" ]] &&
+       [[ -z "$match_proj" ]]; then
+        error_ "$1" is not a valid option.
+        info_ "Syntax: 'comma [loc/cat/proj] [action/service]'"
         return 1
-    fi    
+    fi
 }
 

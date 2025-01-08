@@ -1,26 +1,35 @@
 function miles_ {
     local proj_="$1"
     local act_="$2"
+    local proj_str=".projects.$proj_"
     shift 2
+
+    if [[ $(yq e "$proj_str.spec.services.miles" $YML_PROJECTS) != "true" ]]; then
+        error_ "Project '$proj_' does not support milestones."
+        return 2
+    fi
+
+    local repo_=$(yq e "$proj_str.spec.repo"  $YML_PROJECTS)
+    local prov_=$(yq e "$proj_str.spec.provider" $YML_PROJECTS)
 
     case "$act_" in
         l|ls|list)
-            list_milestones "$proj_"
+            list_miles "$repo_" "$prov_"
             ;;
         n|new)
-            new_milestone "$proj_"
+            new_miles "$repo_" "$prov_"
             ;;
         e|edit)
-            edit_milestone "$proj_"
+            edit_miles "$repo_" "$prov_"
             ;;
         r|rm|remove|d|del|delete)
-            remove_milestone "$proj_"
+            remove_miles "$repo_" "$prov_"
             ;;
-        a|attach)
+        s|set)
             if [[ "$1" == "issue" ]]; then
-                attach_milestone "$proj_" "issues"
+                set_miles "$repo_" "$prov_" "issues"
             elif [[ "$1" == "pr" || "$1" == "mr" ]]; then
-                attach_milestone "$proj_" "prs"
+                set_miles "$repo_" "$prov_" "prs"
             else
                 error_ "Invalid command, use 'set issue' or 'set pr/mr'."
                 return 1
@@ -33,71 +42,28 @@ function miles_ {
     esac
 }
 
-function show_milestone {
-    local proj_="$1"
-    local milestone_id="$2"
-    
-    local milestone=$(fetch_milestones "$proj_" | jq -r ".[] | select(.id == $milestone_id)")
-
-    if [ -z "$milestone" ]; then
-        error_ "Error fetching the milestone details."
-        return 1
-    fi
-    
-    local title=$(echo "$milestone" | jq -r '.title')
-    local description=$(echo "$milestone" | jq -r '.description')
-    local due_date=$(echo "$milestone" | jq -r '.due_on')
-    local creation_date=$(echo "$milestone" | jq -r '.created_at')
-    local modification_date=$(echo "$milestone" | jq -r '.updated_at')
-    local author=$(echo "$milestone" | jq -r '.creator.login')
-
-    if [ "$title" = "null" ] || [ "$title" = "" ]; then
-        title="(No title found)"
-    fi
-    if [ "$description" = "null" ] || [ "$description" = "" ]; then
-        description="(No description found)"
-    fi
-    if [ "$due_date" = "null" ] || [ "$due_date" = "" ]; then
-        due_date="(No due date found)"
-    fi
-
-    local issues_array=($(fetch_items "$proj_" "issues" | jq -r ".[] | select(.milestone_id == $milestone_id) | .title"))
-    local prs_array=($(fetch_items "$proj_" "prs" | jq -r ".[] | select(.milestone_id == $milestone_id) | .title"))
-
-    entry_ "title" "$title"
-    entry_ "desc" "$description"
-    entry_ "due" "$due_date"
-    line_
-    entry_ "created" "$creation_date"
-    entry_ "modif" "$modification_date"
-    entry_ "author" "$author"
-    line_
-    entry_ "issues" " "
-    list_ "${issues_array[@]}"
-    entry_ "prs/mrs" " "
-    list_ "${prs_array[@]}"
-}
-
-function list_milestones {
-    local proj_="$1"
-    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+function list_miles {
+    local repo_="$1"
+    local prov_="$2"
+    local milestones=$(fetch_miles "$repo_" "$prov_" | jq 'if length == 0 then empty else . end')
     if [[ -n "$milestones" ]]; then
-        milestones=$( echo $milestones | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY) 
+        milestones=$( echo $milestones | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
     else
-        error_ "There is no milestones in proj '$proj_'."
+        error_ "There are no milestones in repo '$repo_'."
         return 1
     fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
-        show_milestone "$proj_" "$milestone_id"
+        show_miles "$repo_" "$prov_" "$milestone_id"
     else
         error_ "No milestone selected."
         return 1
     fi
 }
 
-function new_milestone {
-    local proj_="$1"
+function new_miles {
+    local repo_="$1"
+    local prov_="$2"
     primary_ "Title:"
     input_ -v title
     line_
@@ -106,11 +72,9 @@ function new_milestone {
     line_
     primary_ "Due (YYYY-MM-DD):"
     read -e -p "> " due_date
- 
-    local due_date="$(date_ $due_date)"
 
-    local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
+    local due_date_formatted="$(date_ $due_date)"
+
     local endpoint_=$(get_api "$prov_" ".milestones.create.endpoint")
     local method_=$(get_api "$prov_" ".milestones.create.method")
     local json_payload="{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date_formatted\"}"
@@ -122,21 +86,22 @@ function new_milestone {
     fi
 }
 
-function edit_milestone {
-    local proj_="$1"
-    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+function edit_miles {
+    local repo_="$1"
+    local prov_="$2"
+    local milestones=$(fetch_miles "$repo_" "$prov_" | jq 'if length == 0 then empty else . end')
     if [[ -n "$milestones" ]]; then
         local milestones=$( echo $milestones | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
     else
-        error_ "There is no milestones in proj '$proj_'."
+        error_ "There are no milestones in repo '$repo_'."
         return 1
     fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
-        local current_milestone=$(fetch_milestones "$proj_" | jq -r ".[] | select(.id == $milestone_id)")
-        local current_title=$(echo "$current_milestone" | jq -r '.title')
-        local current_description=$(echo "$current_milestone" | jq -r '.description')
-        local current_due_date=$(echo "$current_milestone" | jq -r '.due_on')
+        local current_miles=$(fetch_miles "$repo_" "$prov_" | jq -r ".[] | select(.id == $milestone_id)")
+        local current_title=$(echo "$current_miles" | jq -r '.title')
+        local current_description=$(echo "$current_miles" | jq -r '.description')
+        local current_due_date=$(echo "$current_miles" | jq -r '.due_on')
 
         primary_ -c "Title:" -n "$current_title"
         primary_ "New Title:"
@@ -147,11 +112,9 @@ function edit_milestone {
         input_ -e md -v new_description
         line_
         primary_ -c "Due:" -n "$current_due_date"
-        primary_ -c "New Due:" -n "(yyy-mm-dd)"
+        primary_ -c "New Due:" -n "(yyyy-mm-dd)"
         read -e -p "> " new_due_date
 
-        local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-        local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
         local endpoint_=$(get_api "$prov_" ".milestones.update.endpoint")
         endpoint_="${endpoint_//:repo/$repo_}"
         endpoint_="${endpoint_/:milestone_id/$milestone_id}"
@@ -172,29 +135,25 @@ function edit_milestone {
     fi
 }
 
-function remove_milestone {
-    local proj_="$1"
-
-    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+function remove_miles {
+    local repo_="$1"
+    local prov_="$2"
+    local milestones=$(fetch_miles "$repo_" "$prov_" | jq 'if length == 0 then empty else . end')
     if [[ -n "$milestones" ]]; then
         milestones=$(echo $milestones| jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
     else
-        error_ "There is no milestones in proj '$proj_'."
+        error_ "There are no milestones in repo '$repo_'."
         return 1
     fi
-    
+
     if [[ -n "$milestones" ]]; then
         local milestone_number=$(echo "$milestones" | awk '{print $1}')
-        local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-        local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
         local endpoint_=$(get_api "$prov_" ".milestones.delete.endpoint")
-
         endpoint_="${endpoint_//:repo/$repo_}"
         endpoint_="${endpoint_/:milestone_number/$milestone_number}"
-        
         local method_=$(get_api "$prov_" ".milestones.delete.method")
         local response=$(call_api "$prov_" "$method_" "$endpoint_")
-        
+
         if response_ $response; then
             done_ "Milestone '$milestone_number' has been removed."
             return 0
@@ -202,30 +161,31 @@ function remove_milestone {
             error_ "Failed to remove milestone '$milestone_number'."
             error_ "Response: $response"
             return 1
-        fi 
+        fi
     else
         error_ "No milestone selected."
         return 1
     fi
 }
 
-function attach_milestone {
-    local proj_="$1"
-    local type="$2"
-    local milestones=$(fetch_milestones "$proj_" | jq 'if length == 0 then empty else . end')
+function set_miles {
+    local repo_="$1"
+    local prov_="$2"
+    local type="$3"
+    local milestones=$(fetch_miles "$repo_" "$prov_" | jq 'if length == 0 then empty else . end')
     if [[ -n "$milestones" ]]; then
-        local milestones=$(fetch_milestones "$proj_" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+        local milestones=$(fetch_miles "$repo_" "$prov_" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
     else
-        error_ "There is no milestones in proj '$proj_'."
+        error_ "There are no milestones in repo '$repo_'."
         return 1
     fi
     if [[ -n "$milestones" ]]; then
         local milestone_id=$(echo "$milestones" | awk '{print $1}')
-        local items=$(fetch_items "$proj_" "$type" | jq -r '.[] | "\(.id) \(.title)"' | fzf --multi $FZF_GEOMETRY)
+        local items=$(fetch_items "$repo_" "$prov_" "$type" | jq -r '.[] | "\(.id) \(.title)"' | fzf --multi $FZF_GEOMETRY)
         if [[ -n "$items" ]]; then
             echo "$items" | while read -r item; do
                 local item_id=$(echo "$item" | awk '{print $1}')
-                update_item_milestone "$proj_" "$type" "$item_id" "$milestone_id"
+                update_item_miles "$repo_" "$prov_" "$type" "$item_id" "$milestone_id"
             done
             done_ "Milestone set for selected items."
             return 0
@@ -239,20 +199,18 @@ function attach_milestone {
     fi
 }
 
-function fetch_milestones {
-    local proj_="$1"
-    local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
+function fetch_miles {
+    local repo_="$1"
+    local prov_="$2"
     local endpoint_=$(get_api "$prov_" ".milestones.list.endpoint")
     local method_=$(get_api "$prov_" ".milestones.list.method")
     call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}"
 }
 
 function fetch_items {
-    local proj_="$1"
-    local type="$2"
-    local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
+    local repo_="$1"
+    local prov_="$2"
+    local type="$3"
     local endpoint_
     local method_
 
@@ -270,13 +228,12 @@ function fetch_items {
     call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}"
 }
 
-function update_item_milestone {
-    local proj_="$1"
-    local type="$2"
-    local item_id="$3"
-    local milestone_id="$4"
-    local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
+function update_item_miles {
+    local repo_="$1"
+    local prov_="$2"
+    local type="$3"
+    local item_id="$4"
+    local milestone_id="$5"
     local endpoint_
     local method_
 
