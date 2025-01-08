@@ -3,11 +3,11 @@ function git_ {
     local action="$2"
     local param="$3"
     local proj_path
-    proj_path=$(yq e ".projects.$proj.local.spec.path" "$YML_PROJECTS" | envsubst)
+    proj_path=$(yq e ".local.$proj.spec.path" "$YML_LOCAL" | envsubst)
 
     if [[ -z "$proj_path" || "$proj_path" == "null" ]]; then
         error_ "Project path not set for '$proj'."
-        info_ "Check '.projects.$proj.local.spec.path' in '$YML_PROJECTS'."
+        info_ "Check '.local.$proj.spec.path' in '$YML_PROJECTS'."
         return 1
     fi
 

@@ -2,3 +2,10 @@ providers:
   github:
     provider: github
     base_url: https://api.github.com
+  gitlab:
+    provider: gitlab
+    base_url: https://api.gitlab.com
+  gitlab-privado:
+    provider: gitlab
+    base_url: https://api.gitlab.meudominio.com
+

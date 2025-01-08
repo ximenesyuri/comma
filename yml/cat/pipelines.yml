@@ -4,6 +4,9 @@ pipelines:
       name: 
       desc:
     commands:
-      - command 1
-      - command 2
-      - ...
+      - cd {proj.path}
+      - yarn build
+      - docker compose ...
+      - docker pull
+      - sed (atualiza)
+      - kubectl apply 

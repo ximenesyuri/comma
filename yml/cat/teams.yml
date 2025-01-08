@@ -1,0 +1,9 @@
+teams:
+  algum_time:
+    metadata:
+      name:
+      desc:
+      tags:
+      ...
+    spec:
+      ...

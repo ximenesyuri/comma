@@ -2,6 +2,7 @@
 
 function _comma_compl_prj(){
     declare -A prj_prim_act=(
+        ["git"]="add commit amend log diff"
         ["dot"]="."
         ["issue"]="ls new edit close reopen comment"
         ["label"]="ls new edit rm"
@@ -11,8 +12,7 @@ function _comma_compl_prj(){
     prj_prim_obj=(${!prj_prim_act[@]})
  
     declare -A prj_sec_act=(
-        ["comment"]="new ls rm edit"
-    )
+        ["comment"]="new ls rm edit"   )
     prj_sec_obj=(${!prj_sec_act[@]})
  
 
@@ -23,7 +23,6 @@ function _comma_compl_prj(){
     elif [[ "${prj_sec_obj[@]}" =~ "$1" ]]; then
         echo "${prj_sec_act[$1]}"
     fi
-
 }
 
 function _comma_compl() {

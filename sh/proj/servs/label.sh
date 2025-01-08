@@ -2,15 +2,15 @@ function label_ {
     local proj_="$1"
     local action="$2"
 
-    local repo_=$(yq e ".projects.$proj_.server.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.server.spec.provider" $YML_PROJECTS)
+    local repo_=$(yq e ".projects.$proj_.spec.repo" $YML_PROJECTS)
+    local prov_=$(yq e ".projects.$proj_.spec.provider" $YML_PROJECTS)
 
     if [[ -z "$repo_" || "$repo_" == "null" ]]; then
-        error_ "Missing field '.projects.$proj_.server.spec.repo' in '$YML_PROJECTS'."
+        error_ "Missing field '.projects.$proj_.spec.repo' in '$YML_PROJECTS'."
         return 1
     fi
     if [[ -z "$prov_" || "$prov_" == "null" ]]; then
-        error_ "Missing field '.projects.$proj_.server.spec.provider' in '$YML_PROJECTS'."
+        error_ "Missing field '.projects.$proj_.spec.provider' in '$YML_PROJECTS'."
         return 1
     fi
 

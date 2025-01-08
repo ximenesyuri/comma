@@ -2,11 +2,10 @@ projects:
   f:
     metadata:
       name:
-        desc:
-        tags:
-          - tag 1
-          - tag 2        
-
+      desc:
+      tags:
+        - tag 1
+        - tag 2        
     spec:
       provider: github
       repo: f-utils/general
@@ -16,7 +15,7 @@ projects:
         miles: true
         prs: true
       relations:
-        owner: some_team
+        owner: algum_time
         resources:
           - resource_A
           - resource_B

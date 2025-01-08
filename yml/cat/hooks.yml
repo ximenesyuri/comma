@@ -3,5 +3,7 @@ hooks:
     metadata:
       name:
       desc:
-    trigger: trigger command
+    trigger: commit
     pipeline: 
+      - chegar se o commit está no formato padrão
+      - chegar o tamanho máximo do commit
