@@ -9,10 +9,10 @@ function url_() {
     if [[ -n "$selection" ]]; then
         case "$provider" in
             github|gitea)
-                id=$(echo "$selection" | awk '{print $1}')  # Use number/ID
+                id=$(echo "$selection" | awk '{print $1}')
                 ;;
             gitlab|bitbucket)
-                id=$(echo "$selection" | jq -r '.iid')  # Use internal IID
+                id=$(echo "$selection" | jq -r '.iid')
                 ;;
             *)
                 echo "Unsupported provider: $provider"

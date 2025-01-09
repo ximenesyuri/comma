@@ -30,7 +30,6 @@ function proj_(){
     done
 
     local match_serv=''
-
     for serv in ${SERV_[@]}; do
         declare -a aliases=(${SERV_ALIASES[$serv]})
         match_serv=0
