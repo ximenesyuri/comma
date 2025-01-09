@@ -1,0 +1,86 @@
+github:
+  version: v3
+  base_url: https://api.github.com
+  issues:
+    list:
+      method: GET
+      endpoint: repos/:repo/issues
+    create:
+      method: POST
+      endpoint: repos/:repo/issues
+    update:
+      method: PATCH
+      endpoint: repos/:repo/issues/:issue_number
+    comments:
+      list:
+        method: GET
+        endpoint: repos/:repo/issues/:issue_number/comments
+      create:
+        method: POST
+        endpoint: repos/:repo/issues/:issue_number/comments
+      edit:
+        method: PATCH
+        endpoint: repos/:repo/issues/comments/:comment_id
+      delete:
+        method: DELETE
+        endpoint: repos/:repo/issues/comments/:comment_id
+  labels:
+    list:
+      method: GET
+      endpoint: repos/:repo/labels
+    create:
+      method: POST
+      endpoint: repos/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/labels/:name
+  prs:
+    list:
+      method: GET
+      endpoint: repos/:repo/pulls
+    create:
+      method: POST
+      endpoint: repos/:repo/pulls
+    update:
+      method: PATCH
+      endpoint: repos/:repo/pulls/:number
+    approve:
+      method: POST
+      endpoint: repos/:repo/pulls/:number/reviews
+      body:
+        event: "APPROVE"
+    disapprove:
+      method: POST
+      endpoint: repos/:repo/pulls/:number/reviews
+      body:
+        event: "REQUEST_CHANGES"
+    comments:
+      list:
+        method: GET
+        endpoint: repos/:repo/pulls/:pull_number/comments
+      create:
+        method: POST
+        endpoint: repos/:repo/pulls/:pull_number/comments
+      edit:
+        method: PATCH
+        endpoint: repos/:repo/pulls/comments/:comment_id
+      delete:
+        method: DELETE
+        endpoint: repos/:repo/pulls/comments/:comment_id
+  metadata:
+    colabs:
+      method: GET
+      endpoint: repos/:repo/collaborators
+    files:
+      method: GET
+      endpoint: repos/:repo/git/trees/:branch?recursive=1
+    description:
+      method: GET
+      endpoint: repos/:repo
+      body:
+        response_field: description
+    title:
+      method: GET
+      endpoint: repos/:repo
+      body:
+        response_field: name

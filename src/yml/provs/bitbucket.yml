@@ -1,0 +1,82 @@
+bitbucket:
+  version: 2.0
+  base_url: https://api.bitbucket.org/2.0/repositories
+  issues:
+    list:
+      method: GET
+      endpoint: repositories/:repo/issues
+    create:
+      method: POST
+      endpoint: repositories/:repo/issues
+    update:
+      method: PUT
+      endpoint: repositories/:repo/issues/:issue_id
+    comments:
+      list:
+        method: GET
+        endpoint: repositories/:repo/issues/:issue_id/comments
+      create:
+        method: POST
+        endpoint: repositories/:repo/issues/:issue_id/comments
+      edit:
+        method: PUT
+        endpoint: repositories/:repo/issues/comments/:comment_id
+      delete:
+        method: DELETE
+        endpoint: repositories/:repo/issues/comments/:comment_id
+  labels:
+    list:
+      method: GET
+      endpoint: repositories/:repo/labels
+    create:
+      method: POST
+      endpoint: repositories/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: repositories/:repo/labels/:id
+  prs:
+    list:
+      method: GET
+      endpoint: repositories/:repo/pullrequests
+    create:
+      method: POST
+      endpoint: repositories/:repo/pullrequests
+    update:
+      method: PUT
+      endpoint: repositories/:repo/pullrequests/:id
+    approve:
+      method: POST
+      endpoint: repositories/:repo/pullrequests/:id/approve
+    disapprove:
+      method: DELETE
+      endpoint: repositories/:repo/pullrequests/:id/approve
+    comments:
+      list:
+        method: GET
+        endpoint: repositories/:repo/pullrequests/:id/comments
+      create:
+        method: POST
+        endpoint: repositories/:repo/pullrequests/:id/comments
+      edit:
+        method: PUT
+        endpoint: repositories/:repo/pullrequests/comments/:comment_id
+      delete:
+        method: DELETE
+        endpoint: repositories/:repo/pullrequests/comments/:comment_id
+  metadata:
+    colabs:
+      method: GET
+      endpoint: teams/:repo/members
+    files:
+      method: GET
+      endpoint: repositories/:repo/src/:branch/
+    description:
+      method: GET
+      endpoint: repositories/:repo
+      body:
+        response_field: description
+    title:
+      method: GET
+      endpoint: repositories/:repo
+      body:
+        response_field: name

@@ -1,0 +1,82 @@
+gitlab:
+  version: v4
+  base_url: https://gitlab.com/api/v4
+  issues:
+    list:
+      method: GET
+      endpoint: projects/:repo/issues
+    create:
+      method: POST
+      endpoint: projects/:repo/issues
+    update:
+      method: PUT
+      endpoint: projects/:repo/issues/:issue_id
+    comments:
+      list:
+        method: GET
+        endpoint: projects/:repo/issues/:issue_id/notes
+      create:
+        method: POST
+        endpoint: projects/:repo/issues/:issue_id/notes
+      edit:
+        method: PUT
+        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
+      delete:
+        method: DELETE
+        endpoint: projects/:repo/issues/:issue_id/notes/:note_id
+  labels:
+    list:
+      method: GET
+      endpoint: projects/:repo/labels
+    create:
+      method: POST
+      endpoint: projects/:repo/labels
+    delete:
+      method: DELETE
+      endpoint: projects/:repo/labels/:label_id
+  prs:
+    list:
+      method: GET
+      endpoint: projects/:repo/merge_requests
+    create:
+      method: POST
+      endpoint: projects/:repo/merge_requests
+    update:
+      method: PUT
+      endpoint: projects/:repo/merge_requests/:merge_request_id
+    approve:
+      method: POST
+      endpoint: projects/:repo/merge_requests/:merge_request_id/approve
+    disapprove:
+      method: POST
+      endpoint: projects/:repo/merge_requests/:merge_request_id/unapprove
+    comments:
+      list:
+        method: GET
+        endpoint: projects/:repo/merge_requests/:merge_request_id/notes
+      create:
+        method: POST
+        endpoint: projects/:repo/merge_requests/:merge_request_id/notes
+      edit:
+        method: PUT
+        endpoint: projects/:repo/merge_requests/:merge_request_id/notes/:note_id
+      delete:
+        method: DELETE
+        endpoint: projects/:repo/merge_requests/:merge_request_id/notes/:note_id
+  metadata:
+    colabs:
+      method: GET
+      endpoint: projects/:repo/members
+    files:
+      method: GET
+      endpoint: projects/:repo/repository/tree?recursive=true
+    description:
+      method: GET
+      endpoint: projects/:repo
+      body:
+        response_field: description
+    title:
+      method: GET
+      endpoint: projects/:repo
+      body:
+        response_field: name
