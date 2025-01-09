@@ -1,14 +1,16 @@
+
+#     local repo_=$(yq e ".projects.$proj_.spec.repo" "$YAML_PROJECTS")
+#    local prov_=$(yq e ".projects.$proj_.spec.provider" "$YAML_PROJECTS")
+
 function get_(){
     case "$1" in
-        global|globals)
-            yq e '.globals | keys | .[]' "$YML_GLOBALS" ;;
-        prj|projs|projects)
+        projs|projects)
             yq e '.projects | keys | .[]'  "$YML_PROJECTS" ;;
-        hook|hooks)
+        hooks)
             yq e '.hooks | keys | .[]'  "$YML_HOOKS" ;;
-        pipe|pipes|pipeline|pipelines)
+        pipes|pipelines)
             yq e '.pipelines | keys | .[]'  "$YML_PIPES" ;;
-        prov|provider|providers)
+        provs|providers)
             yq e '.providers | keys | .[]'  "$YML_PROVIDERS" ;;
         *)
             error_ "invalid option for 'get_()' function" ;;

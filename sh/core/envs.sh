@@ -2,10 +2,13 @@ local dir_=${BASH_SOURCE%/*}
 local dir_=${dir_%/*}
 local main_=${dir_%/*}
 
-YML_API=${main_}/src/yml/api.yml
+declare -a PROVS_=(github gitlab gitea bitbucket)
+declare -A API_
+for prov_ in ${PROVS_[@]}; do
+    API_[$prov_]="${main_}/src/yml/provs/${prov_}.yml"
+done
 
 local YML_=$main_/yml
-
 local YML_CONF=$YML_/conf.yml
 local YML_LOCAL=$YML_/local.yml
 

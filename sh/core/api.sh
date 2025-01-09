@@ -1,5 +1,11 @@
 function get_api {
-    yq e ".$1$2" "$YML_API"
+    if [[ "${PROVS_[@]}" =~ "$1" ]]; then
+        prov_yml="${API_[$1]}"
+        yq e ".$1$2" "${prov_yml}"
+    else
+        error_ "get_api: '$1' is not a valid provider."
+        return 1
+    fi
 }
 
 function call_api {
