@@ -1,22 +1,24 @@
 function issue_ {     
     local proj_="$1"
-    local act_="$2"
-    local proj_str=".projects.$proj_"
+    local act_="$2" 
     shift 2 
 
-    if [[ $(yq e "$proj_str.spec.services.issues" $YML_PROJECTS) != "true" ]]; then
-        error_ "Project '$proj_' does not support issues."
-        return 2
+    if ! $(proj_allow issue $proj_);then
+        error_ "Project '$proj_' does not allow issues."
+        return 1
     fi
 
-    local repo_=$(yq e "$proj_str.spec.repo"  $YML_PROJECTS)
-    local prov_=$(yq e "$proj_str.spec.provider" $YML_PROJECTS)
+    local repo_=$(proj_get repo $proj_)
+    local prov_=$(proj_get prov $proj_)
 
     case "$act_" in
         new|n)
             new_issue "$repo_" "$prov_"
             ;;
-        ls)
+        info|inf|i)
+            info_issues "$repo_" "$prov_" "$@"
+            ;;
+        list|ls|l)
             list_issues "$repo_" "$prov_" "$@"
             ;;
         close|c)
@@ -34,14 +36,14 @@ function issue_ {
             ;;
         browse|b)
             dir_=${BASH_SOURCE%/*}
-            dir_=${dir%_/*}
-            source $dir/utils/url.sh
+            dir_=${dir_%/*}
+            source $dir_/utils/url.sh
             browse_issue "$repo_" "$prov_"  
             ;;
         Browse|BROWSE|B)
             dir_=${BASH_SOURCE%/*}
-            dir_=${dir%_/*}
-            source $dir/utils/url.sh
+            dir_=${dir_%/*}
+            source $dir_/utils/url.sh
             BROWSE_issue "$repo_" "$prov_"
             ;;
         *)
@@ -51,7 +53,7 @@ function issue_ {
     esac
 }
 
-function list_issues {
+function filter_issues {
     local repo_="$1"
     local prov_="$2"
     shift 2
@@ -118,10 +120,23 @@ function list_issues {
     [[ -n $owner_filter ]] && jq_filter+=" | select((.user.login | test(\"$owner_filter\")) // false)"
     [[ -n $assign_filter ]] && jq_filter+=" | select((.assignee.login | test(\"$assign_filter\")) // false)"
 
-    local filtered_issues=$(echo "$issues" | jq -c "[$jq_filter]")
+    filtered_issues=$(echo "$issues" | jq -c "[$jq_filter]")
 
     if [[ -z "$filtered_issues" || "$filtered_issues" == "[]" ]]; then
         echo "No matching issues found."
+        return 1
+    fi
+
+    echo "$filtered_issues"
+}
+
+function info_issues(){
+    repo_="$1"
+    prov_="$2"
+
+    filtered_issues=$(filter_issues $repo_ $prov_)
+    if is_error_ "$filtered_issues"; then
+        echo "$filtered_issues"
         return 1
     fi
 
@@ -133,7 +148,6 @@ function list_issues {
         error_ "No issues selected."
     fi
 }
-
 
 function show_issue {
     local repo_="$1"

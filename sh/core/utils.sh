@@ -1,7 +1,3 @@
-
-#     local repo_=$(yq e ".projects.$proj_.spec.repo" "$YAML_PROJECTS")
-#    local prov_=$(yq e ".projects.$proj_.spec.provider" "$YAML_PROJECTS")
-
 function get_(){
     case "$1" in
         projs|projects)
@@ -18,8 +14,7 @@ function get_(){
 }
 
 function deps_ {
-    local dependencies=("curl" "fzf" "yq" "jq")
-    for cmd in "${dependencies[@]}"; do
+    for cmd in "${DEPS_[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
             error_ "Missing dependency '$cmd'."
             return 1
@@ -157,6 +152,24 @@ function input_ {
 function is_hex_ {
     local color="$1"
     if [[ $color =~ ^[0-9A-Fa-f]{6}$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function is_true_(){
+    if [[ "${1^^}" == "TRUE" ]] ||
+       [[ $1 -eq 0 ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function is_error_(){
+    error=$(echo $1 | grep "error:")
+    if [[ -n "$error" ]]; then
         return 0
     else
         return 1

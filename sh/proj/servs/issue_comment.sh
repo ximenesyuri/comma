@@ -3,8 +3,13 @@ function comments_ {
     shift
     local action="$2"
 
-    local repo_=$(get_ repo $proj_)
-    local prov_=$(get_ prov $proj_)
+    if ! $(proj_allow comment $proj_);then
+        error_ "Project '$proj_' does not allow comments."
+        return 1
+    fi
+
+    local repo_=$(proj_get repo $proj_)
+    local prov_=$(proj_get prov $proj_)
 
     case "$action" in
         ls)

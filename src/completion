@@ -69,7 +69,7 @@ complete -F _comma_compl comma
 
 function _,p_compl(){
     prjs=($(_collect_prj))
-    sugg=""
+    sugg=()
     if [[ $COMP_CWORD -eq 1 ]]; then
         sugg="${prjs[*]}"
     elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then

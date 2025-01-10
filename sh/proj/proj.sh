@@ -1,27 +1,35 @@
 function proj_(){
 
-    declare -a SERV_=(git dot issue label pr miles prov hook pipe)
+    declare -a SERV_=(git dot issue label pr miles hook pipe)
 
     declare -A SERV_ALIASES=(
         [dot]="."
         [git]="g"
         [issue]="i issues"
         [label]="l labels"
-        [pr]="p prs mr mrs pull-request pull-requests merge-request merge-requests"
+        [pr]="prs mr mrs pull-request pull-requests merge-request merge-requests"
         [miles]="m mil milestone milestones"
-        [prov]="pv provider providers"
         [hook]="h hooks"
         [pipe]="pp pip pipeline pipelines"
     )
-    if [[ "${PROJS_[@]}" =~ "$1" ]]; then
-        if [[ ! "${CAT_PROJS[@]}" =~ "$1" ]]; then
-            error_ "Proj '$1' is not registered in catalog '$CAT_'."
-            info_ "Register it with 'comma cat add $1'."
-            return 1
+
+    if [[ -z "$1" ]]; then
+        help_proj
+        return 0
+    fi
+
+    declare -a projs
+    projs=($(get_ projs))
+
+    local match_proj=""
+    for proj in "${projs[@]}"; do
+        if [[ "$proj" == "$1" ]]; then
+            match_proj="true" 
         fi
-    else
+    done
+    if [[ "$match_proj" != "true"  ]]; then
         error_ "'$1' is not a valid project."
-        info_ "Try 'comma cat ls proj' to see the available projects."
+        info_ "Try 'comma cat ls proj' to see the available projects." 
         return 1
     fi
 
@@ -32,7 +40,7 @@ function proj_(){
     local match_serv=''
     for serv in ${SERV_[@]}; do
         declare -a aliases=(${SERV_ALIASES[$serv]})
-        match_serv=0
+        match_serv="true"
         if [[ -z "$2" ]]; then
             local path=$(yq e ".local.${1}.spec.path" "$YML_LOCAL" | envsubst)
             "$MAIN_" "$path"
@@ -41,6 +49,7 @@ function proj_(){
              [[ "$2" == "$serv" ]]; then
             serv_=SERV_${serv^^}
             source ${!serv_}
+            source ${BASH_SOURCE%/*}/utils/utils.sh
             "${serv}_" "$1" "${@:3}"
             if [[ ! "$?" == "0" ]]; then
                 return 1
@@ -48,7 +57,7 @@ function proj_(){
             return 0
         fi
     done
-    if [[ $match_serv -eq 0 ]]; then
+    if [[ "$match_serv" != "true" ]]; then
         error_ "'$2' is not a valid service for the object 'proj'."
         return 1
     fi

@@ -2,17 +2,13 @@ function label_ {
     local proj_="$1"
     local action="$2"
 
-    local repo_=$(yq e ".projects.$proj_.spec.repo" $YML_PROJECTS)
-    local prov_=$(yq e ".projects.$proj_.spec.provider" $YML_PROJECTS)
+    if ! $(proj_allow label $proj_);then
+        error_ "Project '$proj_' does not allow labels."
+        return 1
+    fi
 
-    if [[ -z "$repo_" || "$repo_" == "null" ]]; then
-        error_ "Missing field '.projects.$proj_.spec.repo' in '$YML_PROJECTS'."
-        return 1
-    fi
-    if [[ -z "$prov_" || "$prov_" == "null" ]]; then
-        error_ "Missing field '.projects.$proj_.spec.provider' in '$YML_PROJECTS'."
-        return 1
-    fi
+    local repo_=$(proj_get repo $proj_)
+    local prov_=$(proj_get prov $proj_)
 
     case "$action" in
         new)

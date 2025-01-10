@@ -19,6 +19,8 @@ function comma {
         [proj]="p prj prjs projs project projects"
     ) 
     
+
+    DEPS_=("curl" "fzf" "yq" "jq")
     deps_ || return 1
 
     if [[ -z "$1" ]]; then

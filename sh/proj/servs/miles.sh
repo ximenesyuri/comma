@@ -1,16 +1,15 @@
 function miles_ {
     local proj_="$1"
-    local act_="$2"
-    local proj_str=".projects.$proj_"
+    local act_="$2" 
     shift 2
 
-    if [[ $(yq e "$proj_str.spec.services.miles" $YML_PROJECTS) != "true" ]]; then
+    if ! $(proj_allow miles $proj_);then
         error_ "Project '$proj_' does not support milestones."
-        return 2
+        return 1
     fi
 
-    local repo_=$(yq e "$proj_str.spec.repo"  $YML_PROJECTS)
-    local prov_=$(yq e "$proj_str.spec.provider" $YML_PROJECTS)
+    local repo_=$(proj_get repo $proj_)
+    local prov_=$(proj_get prov $proj_)
 
     case "$act_" in
         l|ls|list)
