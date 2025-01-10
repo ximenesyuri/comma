@@ -1,7 +1,7 @@
 local dir_=${BASH_SOURCE%/*}
 local dir_=${dir_%/*}
 local main_=${dir_%/*}
-
+ 
 declare -a PROVS_=(github gitlab gitea bitbucket)
 declare -A API_
 for prov_ in ${PROVS_[@]}; do

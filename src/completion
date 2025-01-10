@@ -1,5 +1,12 @@
 #! /bin/bash
 
+function _collect_prj(){
+    local dir_=${BASH_SOURCE%/*}
+    local main_=${dir_%/*}
+    source $main_/sh/core/envs.sh
+    echo "$(yq e '.projects | keys | .[]'  "$YML_PROJECTS")"    
+}
+
 function _comma_compl_prj(){
     declare -A prj_prim_act=(
         ["git"]="add commit amend log diff"
@@ -25,40 +32,55 @@ function _comma_compl_prj(){
     fi
 }
 
+function _prev(){
+    if [[ -z "$1" ]]; then
+        echo "${COMP_WORDS[COMP_CWORD-1]}"
+    elif [[ $1 -eq 0 ]]; then
+        echo "${COMP_WORDS[COMP_CWORD]}"
+    elif [[ $1 -gt 0 ]]; then
+        echo "${COMP_WORDS[COMP_CWORD-$1]}"
+    elif [[ $1 -lt 0 ]]; then
+        echo "${COMP_WORDS[COMP_CWORD+$1]}"
+    else
+        echo "error: wrong entry for 'prev()'"
+    fi
+}
+
 function _comma_compl() {
-    local dir_=${BASH_SOURCE%/*}
-    local main_=${dir_%/*}
-    source $main_/sh/core/envs.sh
-    local prjs=($(yq e '.projects | keys | .[]'  "$YML_PROJECTS"))
-    local objs=("local" "cat")
-    local helps=("-h" "--help")
-
-    function prev(){
-        if [[ -z "$1" ]]; then
-            echo "${COMP_WORDS[COMP_CWORD-1]}"
-        elif [[ $1 -eq 0 ]]; then
-            echo "${COMP_WORDS[COMP_CWORD]}"
-        elif [[ $1 -gt 0 ]]; then
-            echo "${COMP_WORDS[COMP_CWORD-$1]}"
-        elif [[ $1 -lt 0 ]]; then
-            echo "${COMP_WORDS[COMP_CWORD+$1]}"
-        else
-            echo "error: wrong entry for 'pos()'"
-        fi
-    } 
-
+    local scopes=("local" "cat" "proj")
+    local helps=("-h" "--help") 
     sugg=()
     if [[ $COMP_CWORD -eq 1 ]]; then
-        sugg="${objs[*]} ${prjs[*]} ${helps[*]}"
-    elif [[ "${prjs[@]}" =~ "$(prev 1)" ]]; then
-        sugg=($(_comma_compl_prj $(prev 1)))
-    elif [[ "${prjs[@]}" =~ "$(prev 2)" ]]; then
-        sugg=($(_comma_compl_prj $(prev 1)))
-    elif [[ "${prjs[@]}" =~ "$(prev 3)" ]]; then
-        sugg=($(_comma_compl_prj $(prev 1)))
+        sugg="${scopes[*]} ${helps[*]}"
+    elif [[ "proj" =~ "$(_prev 1)" ]]; then
+        prjs=($(_collect_prj))
+        sugg="${prjs[*]}"
+    elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(_prev 2)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(_prev 3)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
     fi
-    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(prev 0)") )
+    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
 }
 
 complete -F _comma_compl comma
-complete -F _comma_compl ,
+
+function _,p_compl(){
+    prjs=($(_collect_prj))
+    sugg=""
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        sugg="${prjs[*]}"
+    elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(_prev 2)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
+    elif [[ "${prjs[@]}" =~ "$(_prev 3)" ]]; then
+        sugg=($(_comma_compl_prj $(_prev 1)))
+    fi
+    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
+}
+
+complete -F _,p_compl ,p
+complete -F _,p_compl ,

@@ -1,3 +1,7 @@
+function payload_(){
+    proj_=$1
+}
+
 function issue_payload {
     local provider="$1"
     local action="$2"

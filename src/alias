@@ -1,1 +1,6 @@
-alias ,="comma"
+#! /bin/bash
+
+alias ,l="comma local"
+alias ,c="comma cat"
+alias ,p="comma proj"
+alias ,=",p"

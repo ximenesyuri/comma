@@ -8,14 +8,15 @@ function comma {
     source ${BASH_SOURCE%/*}/sh/core/help.sh
     source ${BASH_SOURCE%/*}/sh/core/api.sh
 
-    declare -a OBJ_=("local" "cat")
-    for obj in ${OBJ_[@]}; do
-        eval "MAIN_${obj^^}=${BASH_SOURCE%/*}/sh/$obj/$obj.sh"
+    declare -a SCOPE_=("local" "cat" "proj")
+    for scope in ${SCOPE_[@]}; do
+        eval "MAIN_${scope^^}=${BASH_SOURCE%/*}/sh/$scope/$scope.sh"
     done 
 
-    declare -A OBJ_ALIASES=(
+    declare -A SCOPE_ALIASES=(
         [local]="l loc locs locals"
         [cat]="c cats catalog catalogs"
+        [proj]="p prj prjs projs project projects"
     ) 
     
     deps_ || return 1
@@ -32,39 +33,28 @@ function comma {
         help_
         return 0
     fi
-    local match_obj=""
-    for obj in ${OBJ_[@]}; do
-        declare -a aliases=(${OBJ_ALIASES[$obj]})
+    local match_scope=""
+    for scope in ${SCOPE_[@]}; do
+        declare -a aliases=(${SCOPE_ALIASES[$scope]})
         for alias in "${aliases[@]}"; do
             if [[ "${alias}" == "$1" ]] ||
-               [[ "$1" == "$obj" ]]; then
-                match_obj="true"
-                shift 
-                "${obj}_" "$@"
+               [[ "$1" == "$scope" ]]; then
+                match_scope="true"              
+                src_scope="MAIN_${scope^^}"
+                shift
+                source ${!src_scope}
+                "${scope}_" "$@"
                 if [[ ! "$?" == "0" ]]; then
                     return 1
                 fi
                 return 0
             fi
         done
-    done 
-    match_proj=""
-    for proj in "${CAT_PROJS[@]}"; do
-        if [[ "$proj" == "$1" ]]; then
-            match_proj="true"
-            source "${BASH_SOURCE%/*}/sh/proj/proj.sh"
-            proj_ "$@"
-            if [[ ! "$?" == "0" ]]; then
-                return 1
-            fi
-            return 0
-        fi
     done
 
-    if [[ -z "$match_obj" ]] &&
-       [[ -z "$match_proj" ]]; then
-        error_ "$1" is not a valid option.
-        info_ "Syntax: 'comma [loc/cat/proj] [action/service]'"
+    if [[ -z "$match_scope" ]]; then
+        error_ "'$1' is not a valid scope."
+        info_ "Scopes: ${SCOPE_[*]}"
         return 1
     fi
 }

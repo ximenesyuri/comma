@@ -61,15 +61,15 @@ function error_() {
 }
 
 function done_() {
-    echo -e "${DONE}error:${RESET}" "$@"  
+    echo -e "${DONE}done:${RESET}" "$@"  
 }
 
 function info_() {
-    echo -e "${INFO}error:${RESET}" "$@"  
+    echo -e "${INFO}info:${RESET}" "$@"  
 }
 
 function warn_() {
-    echo -e "${WARN}error:${RESET}" "$@"
+    echo -e "${WARN}warn:${RESET}" "$@"
 }
 
 function line_(){
@@ -80,7 +80,7 @@ function entry_(){
     if [[ -n "$2" ]]; then
         printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "$1:" "$2"
     else
-        error_ "Missing arguments."
+        error_ "entr_: Missing arguments."
     fi
 }
 
