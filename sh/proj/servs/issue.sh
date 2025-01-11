@@ -1,10 +1,10 @@
-function issue_ {     
+function issue_ {
+    PROJ_DEPS 
     local proj_="$1"
-    local act_="$2" 
-    shift 2 
+    local act_="$2"
+    shift 2
 
-    if ! $(proj_allow issue $proj_);then
-        error_ "Project '$proj_' does not allow issues."
+    if is_error_ $(proj_allow issue $proj_); then 
         return 1
     fi
 
@@ -19,35 +19,35 @@ function issue_ {
             info_issues "$repo_" "$prov_" "$@"
             ;;
         list|ls|l)
+            source $PROJ_DIR/utils/url.sh
             list_issues "$repo_" "$prov_" "$@"
             ;;
-        close|c)
-            change_state "$repo_" "$prov_" "close" "open"
+        close|C)
+            change_state "$repo_" "$prov_" "closed"
             ;;
-        comment|com|C)
-            source ${BASH_SOURCE%/*}/issue_comment.sh
-            comments_ "$proj_" "$prov_" "$@"
+        comment|com|c)
+            source $dir_/issue_comment.sh
+            if is_error_ $(proj_allow comments $proj_); then
+                return 1
+            fi 
+            comments_ "$repo_" "$prov_" "$@"
             ;;
         open|o)
-            change_state "$repo_" "$prov_" "open" "closed"
+            change_state "$repo_" "$prov_" "open"
             ;;
         edit|e)
             edit_issue "$repo_" "$prov_"
             ;;
         browse|b)
-            dir_=${BASH_SOURCE%/*}
-            dir_=${dir_%/*}
-            source $dir_/utils/url.sh
-            browse_issue "$repo_" "$prov_"  
+            source $PROJ_DIR/utils/url.sh
+            browse_issue "$repo_" "$prov_"
             ;;
         Browse|BROWSE|B)
-            dir_=${BASH_SOURCE%/*}
-            dir_=${dir_%/*}
-            source $dir_/utils/url.sh
+            source $PROJ_DIR/utils/url.sh
             BROWSE_issue "$repo_" "$prov_"
             ;;
         *)
-            error_ "Issue actions: 'new', 'ls', 'close', 'reopen', 'edit'."
+            error_ "Issue actions: 'new', 'info', 'list', 'close', 'open', 'edit', 'browse'."
             return 1
             ;;
     esac
@@ -58,13 +58,13 @@ function filter_issues {
     local prov_="$2"
     shift 2
 
-    local state_filter='state=open'
+    local state_filter="state=open"
     local label_filter=""
     local name_filter=""
     local desc_filter=""
     local owner_filter=""
     local assign_filter=""
-    
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -l|--label|--labels)
@@ -104,9 +104,12 @@ function filter_issues {
         shift
     done
 
-    local endpoint_=$(get_api "$prov_" ".issues.list.endpoint")
-    local method_=$(get_api "$prov_" ".issues.list.method")
-    local issues=$(call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}?$state_filter")
+    local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "list")
+    if is_error_ "$endpoint"; then
+        return 1
+    fi
+    local method=$(method_ "issues" "$prov_" "list")
+    local issues=$(call_api "$prov_" "$method" "$endpoint?$state_filter")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
         error_ "Could not fetch issues."
@@ -114,11 +117,11 @@ function filter_issues {
     fi
 
     local jq_filter=".[]"
-    [[ -n $label_filter ]] && jq_filter+=" | select((.labels[]?.name | test(\"$label_filter\")) // false)"
-    [[ -n $name_filter ]] && jq_filter+=" | select((.title | test(\"$name_filter\")) // false)"
-    [[ -n $desc_filter ]] && jq_filter+=" | select((.body | test(\"$desc_filter\")) // false)"
-    [[ -n $owner_filter ]] && jq_filter+=" | select((.user.login | test(\"$owner_filter\")) // false)"
-    [[ -n $assign_filter ]] && jq_filter+=" | select((.assignee.login | test(\"$assign_filter\")) // false)"
+    [[ -n $label_filter ]] && jq_filter+=" | select(.labels[]?.name? | test(\"$label_filter\"))"
+    [[ -n $name_filter ]] && jq_filter+=" | select(.title? | test(\"$name_filter\"))"
+    [[ -n $desc_filter ]] && jq_filter+=" | select(.body? | test(\"$desc_filter\"))"
+    [[ -n $owner_filter ]] && jq_filter+=" | select(.user.login? | test(\"$owner_filter\"))"
+    [[ -n $assign_filter ]] && jq_filter+=" | select(.assignee.login? | test(\"$assign_filter\"))"
 
     filtered_issues=$(echo "$issues" | jq -c "[$jq_filter]")
 
@@ -130,13 +133,49 @@ function filter_issues {
     echo "$filtered_issues"
 }
 
-function info_issues(){
-    repo_="$1"
-    prov_="$2"
+function list_issues {
+    local repo_="$1"
+    local prov_="$2"
 
-    filtered_issues=$(filter_issues $repo_ $prov_)
+    local issues_json=$(filter_issues "$repo_" "$prov_" --all)
+    if is_error_ "$issues_json"; then
+        return 1
+    fi
+
+    local open_issues=$(echo "$issues_json" | jq '[.[] | select(.state=="open")] | length')
+    local closed_issues=$(echo "$issues_json" | jq '[.[] | select(.state=="closed")] | length')
+    local total_issues=$(echo "$issues_json" | jq 'length')
+
+    entry_ "proj" "$(basename "$repo_")"
+    entry_ "repo" "$repo_"
+    entry_ "url" "$(url_ "issue" "$prov_" "$repo_")"
+    entry_ "open" "$open_issues"
+    entry_ "closed" "$closed_issues"
+    entry_ "total" "$total_issues"
+    line_
+
+    echo "$issues_json" | jq -c '.[]' | while read -r issue; do
+        local number=$(echo "$issue" | jq -r '.number')
+        local author=$(echo "$issue" | jq -r '.user.login')
+        local title=$(echo "$issue" | jq -r '.title')
+        local labels=$(echo "$issue" | jq -r '.labels | map(.name) | join(", ") // "None"')
+        local comments=$(echo "$issue" | jq -r '.comments')
+
+        entry_ "issue" "#$number"
+        entry_ "author" "$author"
+        entry_ "title" "$title"
+        entry_ "labels" "$labels"
+        entry_ "comments" "#$comments"
+        line_
+    done
+}
+
+function info_issues {
+    local repo_="$1"
+    local prov_="$2"
+
+    local filtered_issues=$(filter_issues "$repo_" "$prov_")
     if is_error_ "$filtered_issues"; then
-        echo "$filtered_issues"
         return 1
     fi
 
@@ -154,12 +193,15 @@ function show_issue {
     local prov_="$2"
     local number_="$3"
 
-    local endpoint_=$(get_api "$prov_" ".issues.update.endpoint")
-    endpoint_="${endpoint_/:repo/$repo_}"
-    endpoint_="${endpoint_/:issue_number/$number_}"
-    local method_=$(get_api "$prov_" ".issues.update.method")
-
-    local issue_=$(call_api "$prov_" "GET" "$endpoint_")
+    local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "get" "$number_")
+    if is_error_ "$endpoint"; then
+        return 1
+    fi
+    local method=$(method_ "issues" "$prov_" "get")
+    local issue_=$(call_api "$prov_" "$method" "$endpoint")
+    if is_error_ "$issue_"; then
+        return 1
+    fi
 
     if [[ $? -ne 0 || -z "$issue_" || "$(echo "$issue_" | jq -r '.message')" == "Not Found" ]]; then
         error_ "Could not fetch issue details."
@@ -212,22 +254,21 @@ function show_issue {
     fi
 }
 
-
 function fetch_comments {
     local repo_="$1"
     local prov_="$2"
     local id_="$3"
 
-    local endpoint_=$(get_api "$prov_" ".issues.comment.endpoint")
-    local method_=$(get_api "$prov_" ".issues.comment.method")
-    call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}/id_/comments"
+    local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "comments")
+    local method=$(method_ "issues" "$prov_" "comments")
+    call_api "$prov_" "$method" "${endpoint//:issue_number/$id_}"
 }
 
 function new_issue {
     local repo_="$1"
-    local prov_="$2" 
+    local prov_="$2"
     local labels=$(fetch_labels "$repo_" "$prov_")
-    local label_names=$(echo "$labels" | jq -r '.[].name') 
+    local label_names=$(echo "$labels" | jq -r '.[].name')
 
     primary_ "Title:"
     input_ -v title
@@ -243,37 +284,36 @@ function new_issue {
     primary_ "Assign:"
     input_ -v assign_user
 
-    local endpoint_=$(get_api "$prov_" ".issues.create.endpoint")
-    local method_=$(get_api "$prov_" ".issues.create.method")
-    local json_payload="{\"title\": \"${title}\", \"body\": ${description}, \"labels\": ${selected_labels_json}, \"assignee\": \"${assign_user}\"}"
+    local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "create")
+    local method=$(method_ "issues" "$prov_" "create")
+    local json_payload=$(issue_payload "$prov_" "create" title="$title" body="$description" labels="$selected_labels_json" assignee="$assign_user")
 
-    local response=$(call_api "$prov_" "POST" "${endpoint_//:repo/$repo_}" "$json_payload")
+    local response=$(call_api "$prov_" "$method" "$endpoint" "$json_payload")
 
-    if response_ $response; then 
+    if response_ "$response"; then
         done_ "The issue has been created."
     else
         error_ "Failed to create the issue."
         error_ "Response: $response"
     fi
-
 }
 
 function fetch_labels {
     local repo_="$1"
     local prov_="$2"
 
-    local endpoint_=$(get_api "$prov_" ".labels.list.endpoint")
-    local method_=$(get_api "$prov_" ".labels.list.method")
-    call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}"
+    local endpoint=$(endpoint_ "label" "$prov_" "$repo_" "list")
+    local method=$(method_ "labels" "$prov_" "list")
+    call_api "$prov_" "$method" "$endpoint"
 }
 
 function edit_issue {
     local repo_="$1"
     local prov_="$2"
 
-    local list_endpoint=$(get_api "$prov_" ".issues.list.endpoint")
-    local list_method=$(get_api "$prov_" ".issues.list.method")
-    local issues=$(call_api "$prov_" "$list_method" "${list_endpoint//:repo/$repo_}")
+    local list_endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "list")
+    local method_get=$(method_ "issues" "$prov_" "list")
+    local issues=$(call_api "$prov_" "$method_get" "$list_endpoint")
 
     if [[ $? -ne 0 || -z "$issues" ]]; then
         error_ "Could not fetch issues."
@@ -286,11 +326,9 @@ function edit_issue {
         echo "No issue selected."
         return 1
     fi
-
-    local update_endpoint=$(get_api "$prov_" ".issues.update.endpoint")
-    update_endpoint="${update_endpoint//:repo/$repo_}"
-    update_endpoint="${update_endpoint//:issue_number/$number_}"
-    local issue=$(call_api "$prov_" "GET" "$update_endpoint")
+    local update_endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "update" "$number_")
+    local method_get=$(method_ "issues" "$prov_" "get")
+    local issue=$(call_api "$prov_" "$method_get" "$update_endpoint")
 
     if [[ $? -ne 0 || -z "$issue" || "$(echo "$issue" | jq -r '.message')" == "Not Found" ]]; then
         error_ "Could not fetch issue details."
@@ -320,7 +358,7 @@ function edit_issue {
     local labels=$(fetch_labels "$repo_" "$prov_")
     local label_names=$(echo "$labels" | jq -r '.[].name')
     local selected_labels=$(echo "$label_names" | fzf --multi $FZF_GEOMETRY)
-    local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')  
+    local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
     line_
     echo -e ${PRIMARY}Assignee:${RESET} "$current_assignee"
@@ -332,16 +370,12 @@ function edit_issue {
         json_assignee_value="\"$new_assignee\""
     fi
 
-    local data_=$(jq -n \
-        --arg title "$new_title" \
-        --arg body "$new_body" \
-        --argjson labels "$selected_labels_json" \
-        --argjson assignee "$json_assignee_value" \
-        '{title: $title, body: $body, labels: $labels, assignee: $assignee}')
+    local method_patch=$(method_ "issues" "$prov_" "update")
+    local data_=$(issue_payload "$prov_" "update" title="$new_title" body="$new_body" labels="$selected_labels_json" assignee="$json_assignee_value")
 
-    local response=$(call_api "$prov_" "PATCH" "$update_endpoint" "$data_")
+    local response=$(call_api "$prov_" "$method_patch" "$update_endpoint" "$data_")
 
-    if response_ "$response"; then 
+    if response_ "$response"; then
         done_ "The issue has been edited."
     else
         error_ "Failed to edit the issue."
@@ -349,16 +383,14 @@ function edit_issue {
     fi
 }
 
-
 function change_state {
     local repo_="$1"
     local prov_="$2"
     local state_new="$3"
-    local state_label="$4"
 
-    local endpoint_=$(get_api "$prov_" ".issues.list.endpoint")
-    local method_=$(get_api "$prov_" ".issues.list.method")
-    local issues_=$(call_api "$prov_" "$method_" "${endpoint_//:repo/$repo_}?state=$state_label")
+    local list_endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "list")
+    local method_get=$(method_ "issues" "$prov_" "list")
+    local issues_=$(call_api "$prov_" "$method_get" "$list_endpoint?state=all")
 
     if [[ $? -ne 0 || -z "$issues_" ]]; then
         error_ "Could not fetch issue state."
@@ -384,41 +416,38 @@ function change_state {
             continue
         fi
 
-        local endpoint_=$(get_api "$prov_" ".issues.update.endpoint")
-        local method_=$(get_api "$prov_" ".issues.update.method")
-        endpoint_="${endpoint_/:repo/$repo_}"
-        endpoint_="${endpoint_/:issue_number/$number_}"
+        local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "update" "$number_")
+        local method=$(method_ "issues" "$prov_" "update")
 
-        local data_="{\"state\": \"$state_new\"}"
-        local response=$(call_api "$prov_" "$method_" "$endpoint_" "$data_")
+        local data_=$(issue_payload "$prov_" "update" state="$state_new")
+        local response=$(call_api "$prov_" "$method" "$endpoint" "$data_")
 
-        if response_ $response; then 
+        if response_ "$response"; then
             done_ "The issue status has been changed."
         else
             error_ "Failed to change issue status."
             error_ "Response: $response"
-        fi 
+        fi
     done
 }
 
 function browse_issue() {
     local repo_="$1"
     local prov_="$2"
-    local url=$(url_ "issue" "$prov_" "$repo_" )
+    local url=$(url_ "issue" "$prov_" "$repo_")
     browser_ "$url"
 }
 
 function BROWSE_issue() {
     local repo_="$1"
     local prov_="$2"
-    local issues=$(list_issues "$repo" "$provider")
-    local selection_=$(echo "$issues" | fzf $FZF_GEOMETRY --inline-info)  
+    local issues=$(list_issues "$repo_" "$prov_")
+    local selection_=$(echo "$issues" | fzf $FZF_GEOMETRY --inline-info)
     if [[ -n "$selection_" ]]; then
-        local url=$(url_ "issue" "$prov_" "$repo_" "$selection_" )
+        local url=$(url_ "issue" "$prov_" "$repo_" "$selection_")
         browser_ "$url"
     else
         error_ "No issue selected."
-    fi  
+    fi
 }
-
 

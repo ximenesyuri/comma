@@ -33,8 +33,16 @@ function proj_(){
         return 1
     fi
 
+    local PROJ_DIR=${BASH_SOURCE%/*}
+    function PROJ_DEPS() {
+        source $PROJ_DIR/utils/utils.sh
+        source $PROJ_DIR/utils/method.sh
+        source $PROJ_DIR/utils/endpoint.sh
+        source $PROJ_DIR/utils/payload.sh
+    }
+
     for serv in ${SERV_[@]}; do
-        eval "SERV_${serv^^}=${BASH_SOURCE%/*}/servs/$serv.sh"
+        eval "SERV_${serv^^}=$PROJ_DIR/servs/$serv.sh"
     done
 
     local match_serv=''
@@ -49,7 +57,6 @@ function proj_(){
              [[ "$2" == "$serv" ]]; then
             serv_=SERV_${serv^^}
             source ${!serv_}
-            source ${BASH_SOURCE%/*}/utils/utils.sh
             "${serv}_" "$1" "${@:3}"
             if [[ ! "$?" == "0" ]]; then
                 return 1

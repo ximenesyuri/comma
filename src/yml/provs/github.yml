@@ -2,6 +2,9 @@ github:
   version: v3
   base_url: https://api.github.com
   issues:
+    get:
+      method: GET
+      endpoint: repos/:repo/issues/:issue_number
     list:
       method: GET
       endpoint: repos/:repo/issues
@@ -25,6 +28,9 @@ github:
         method: DELETE
         endpoint: repos/:repo/issues/comments/:comment_id
   labels:
+    get:
+      method: GET
+      endpoint: repos/:repo/labels/:name
     list:
       method: GET
       endpoint: repos/:repo/labels
@@ -35,6 +41,9 @@ github:
       method: DELETE
       endpoint: repos/:repo/labels/:name
   prs:
+    get:
+      method: GET
+      endpoint: repos/:repo/pulls/:number
     list:
       method: GET
       endpoint: repos/:repo/pulls

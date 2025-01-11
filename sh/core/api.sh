@@ -85,7 +85,10 @@ function call_api {
         echo "$response"
     else
         error_ "Unable to parse API response."
-        error_ "Response: $response"
+        error_ "Response:"
+        line_
+        echo -e "$response"
+        line_
         return 1
     fi
 }

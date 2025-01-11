@@ -1,145 +1,49 @@
 function endpoint_ {
-    local type="$1"
-    local proj_="$2"
-    local action="$3"
-    local identifier="$4"
+    local type_="$1"
+    local prov_="$2"
+    local repo_="$3"
+    local action="$4"
+    local identifier="$5"
+    local endpoint
 
-    local provider=$(yq ".projects.${proj_}.spec.provider" "$YML_PROJECTS")
-    local repo=$(yq ".projects.${proj_}.spec.repo" "$YML_PROJECTS")
+    local endpoint_key
+    case "$type_" in
+        i|issue|issues) endpoint_key="issues";;
+        p|pr|prs) endpoint_key="prs";;
+        l|label|labels) endpoint_key="labels";;
+        m|miles|milestone|milestones) endpoint_key="milestones";;
+        *) error_ "Unsupported type: $type_"; return 1;;
+    esac
 
-    if [[ -z "$provider" || -z "$repo" ]]; then
-        error_ "Provider or repo not set for project '$proj_'."
+    endpoint=$(get_api "$prov_" ".${endpoint_key}.${action}.endpoint")
+    if [ -z "$endpoint" ]; then
+        error_ "Unsupported action: $action for provider: $prov_ of type: $type_"
         return 1
     fi
 
-    local endpoint
+    endpoint=${endpoint//:repo/$repo_}
 
-    case "$type" in
-        issue|issues)
-            endpoint=$(get_api "$provider" ".issues.${action}.endpoint")
-            case "$provider" in
-                github|gitlab|gitea|bitbucket)
-                    case "$action" in
-                        list|get)
-                            endpoint=${endpoint//:repo/$repo}
-                            if [[ "$action" == "list" ]] && [[ -n "$identifier" ]]; then
-                                if [[ "$provider" =~ github|gitea ]]; then
-                                    endpoint=${endpoint//:issue_number/$identifier}
-                                else
-                                    endpoint=${endpoint//:issue_id/$identifier}
-                                fi
-                            fi
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                *)
-                    error_ "Unsupported provider: $provider for type: $type"
-                    return 1
-                    ;;
-            esac
-            ;;
-        label)
-            endpoint=$(get_api "$provider" ".labels.${action}.endpoint")
-            case "$provider" in
-                github|gitlab|gitea|bitbucket)
-                    case "$action" in
-                        list)
-                            endpoint=${endpoint//:repo/$repo}
-                            ;;
-                        delete|edit)
-                            endpoint=${endpoint//:repo/$repo}
-                            endpoint=${endpoint//:name/$identifier}
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                *)
-                    error_ "Unsupported provider: $provider for type: $type"
-                    return 1
-                    ;;
-            esac
-            ;;
-        pr)
-            endpoint=$(get_api "$provider" ".prs.${action}.endpoint")
-            case "$provider" in
-                github)
-                    case "$action" in
-                        list)
-                            endpoint=${endpoint//:repo/$repo}
-                            ;;
-                        new|update|approve|disapprove)
-                            endpoint=${endpoint//:repo/$repo}
-                            endpoint=${endpoint//:pull_number/$identifier}
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                gitlab)
-                    case "$action" in
-                        list)
-                            endpoint=${endpoint//:repo/$repo}
-                            ;;
-                        new|update|approve|disapprove)
-                            endpoint=${endpoint//:repo/$repo}
-                            endpoint=${endpoint//:merge_request_iid/$identifier}
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                gitea)
-                    case "$action" in
-                        list)
-                            endpoint=${endpoint//:repo/$repo}
-                            ;;
-                        new|update|approve|disapprove)
-                            endpoint=${endpoint//:repo/$repo}
-                            endpoint=${endpoint//:index/$identifier}
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                bitbucket)
-                    case "$action" in
-                        list)
-                            endpoint=${endpoint//:repo/$repo}
-                            ;;
-                        new|update|approve|disapprove)
-                            endpoint=${endpoint//:repo/$repo}
-                            endpoint=${endpoint//:id/$identifier}
-                            ;;
-                        *)
-                            error_ "Unsupported action: $action for provider: $provider of type: $type"
-                            return 1
-                            ;;
-                    esac
-                    ;;
-                *)
-                    error_ "Unsupported provider: $provider for type: $type"
-                    return 1
-                    ;;
-            esac
-            ;;
-        *)
-            error_ "Unsupported type: $type"
-            return 1
-            ;;
+    case "$prov_:$type_:$action" in
+        github:pr:*) id_placeholder=":number";;
+        github:issue:*) id_placeholder=":issue_number";;
+        github:label:*) id_placeholder=":name";;
+        github:milestone:*) id_placeholder=":milestone_number";;
+        gitlab:pr:*) id_placeholder=":merge_request_id";;
+        gitlab:issue:*) id_placeholder=":issue_id";;
+        gitlab:label:*) id_placeholder=":label_id";;
+        gitlab:milestone:*) id_placeholder=":milestone_id";;
+        gitea:pr:*) id_placeholder=":index";;
+        gitea:issue:*) id_placeholder=":index";;
+        gitea:label:*) id_placeholder=":id";;
+        gitea:milestone:*) id_placeholder=":milestone_id";;
+        bitbucket:pr:*) id_placeholder=":id";;
+        bitbucket:issue:*) id_placeholder=":issue_id";;
+        bitbucket:label:*) id_placeholder=":id";;
+        bitbucket:milestone:*) id_placeholder=":milestone_id";;
+        *) id_placeholder="";;
     esac
+
+    [[ -n "$identifier" ]] && endpoint=${endpoint//$id_placeholder/$identifier}
 
     echo "$endpoint"
 }

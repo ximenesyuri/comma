@@ -2,6 +2,9 @@ gitea:
   version: v1
   base_url: https://gitea.com/api/v1
   issues:
+    get:
+      method: GET
+      endpoint: repos/:repo/issues/:index
     list:
       method: GET
       endpoint: repos/:repo/issues
@@ -25,6 +28,9 @@ gitea:
         method: DELETE
         endpoint: repos/:repo/issues/comments/:comment_id
   labels:
+    get:
+      method: GET
+      endpoint: repos/:repo/labels/:id
     list:
       method: GET
       endpoint: repos/:repo/labels
@@ -35,6 +41,9 @@ gitea:
       method: DELETE
       endpoint: repos/:repo/labels/:id
   prs:
+    get:
+      method: GET
+      endpoint: repos/:repo/pulls/:index
     list:
       method: GET
       endpoint: repos/:repo/pulls

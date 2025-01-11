@@ -1,5 +1,16 @@
-function payload_(){
-    proj_=$1
+function payload_() {
+    local type_="$1"
+    local provider="$2"
+    local action="$3"
+    shift 3
+
+    case "$type_" in
+        issue|issues) issue_payload "$provider" "$action" "$@" ;;
+        pr|prs) pr_payload "$provider" "$action" "$@" ;;
+        label|labels) label_payload "$provider" "$action" "$@" ;;
+        milestone|milestones) miles_payload "$provider" "$action" "$@" ;;
+        *) error_ "Unsupported type: $type_"; return 1 ;;
+    esac
 }
 
 function issue_payload {
@@ -18,46 +29,25 @@ function issue_payload {
         esac
     done
 
+    local payload
     case "$provider" in
         github)
             case "$action" in
-                create)
-                    echo "{\"title\": \"$title\", \"body\": \"$body\", \"labels\": [$labels], \"assignee\": \"$assignee\"}"
-                    ;;
-                update)
-                    echo "{\"title\": \"$title\", \"body\": \"$body\", \"state\": \"$state\"}"
-                    ;;
-                list|comment)
-                    echo "{}"
-                    ;;
-                *)
-                    error_ "Unsupported action: $action for provider: $provider"
-                    return 1
-                    ;;
+                create) payload="{\"title\": \"$title\", \"body\": \"$body\", \"labels\": [$labels], \"assignee\": \"$assignee\"}" ;;
+                update) payload="{\"title\": \"$title\", \"body\": \"$body\", \"state\": \"$state\"}" ;;
+                *) payload="{}";;
             esac
             ;;
         gitlab|gitea|bitbucket)
             case "$action" in
-                create)
-                    echo "{\"title\": \"$title\", \"description\": \"$body\", \"labels\": [$labels], \"assignee\": \"$assignee\"}"
-                    ;;
-                update)
-                    echo "{\"title\": \"$title\", \"description\": \"$body\", \"state_event\": \"$state\"}"
-                    ;;
-                list|comment)
-                    echo "{}"
-                    ;;
-                *)
-                    error_ "Unsupported action: $action for provider: $provider"
-                    return 1
-                    ;;
+                create) payload="{\"title\": \"$title\", \"description\": \"$body\", \"labels\": \"$labels\", \"assignee\": \"$assignee\"}" ;;
+                update) payload="{\"title\": \"$title\", \"description\": \"$body\", \"state_event\": \"$state\"}" ;;
+                *) payload="{}";;
             esac
             ;;
-        *)
-            error_ "Unsupported provider: $provider"
-            return 1
-            ;;
     esac
+
+    echo "$payload"
 }
 
 function pr_payload {
@@ -75,52 +65,27 @@ function pr_payload {
         esac
     done
 
+    local payload
     case "$provider" in
         github)
             case "$action" in
-                create)
-                    echo "{\"title\": \"$title\", \"body\": \"$body\", \"base\": \"$base\", \"head\": \"$head\"}"
-                    ;;
-                update)
-                    echo "{\"title\": \"$title\", \"body\": \"$body\"}"
-                    ;;
-                approve)
-                    echo "{\"event\": \"APPROVE\"}"
-                    ;;
-                disapprove)
-                    echo "{\"event\": \"REQUEST_CHANGES\"}"
-                    ;;
-                list)
-                    echo "{}"
-                    ;;
-                *)
-                    error_ "Unsupported action: $action for provider: $provider"
-                    return 1
-                    ;;
+                create) payload="{\"title\": \"$title\", \"body\": \"$body\", \"base\": \"$base\", \"head\": \"$head\"}" ;;
+                update) payload="{\"title\": \"$title\", \"body\": \"$body\"}" ;;
+                approve) payload="{\"event\": \"APPROVE\"}" ;;
+                disapprove) payload="{\"event\": \"REQUEST_CHANGES\"}" ;;
+                *) payload="{}";;
             esac
             ;;
         gitlab|gitea|bitbucket)
             case "$action" in
-                create)
-                    echo "{\"title\": \"$title\", \"description\": \"$body\", \"source_branch\": \"$base\", \"target_branch\": \"$head\"}"
-                    ;;
-                update)
-                    echo "{\"title\": \"$title\", \"description\": \"$body\"}"
-                    ;;
-                list)
-                    echo "{}"
-                    ;;
-                *)
-                    error_ "Unsupported action: $action for provider: $provider"
-                    return 1
-                    ;;
+                create) payload="{\"title\": \"$title\", \"description\": \"$body\", \"source_branch\": \"$head\", \"target_branch\": \"$base\"}" ;;
+                update) payload="{\"title\": \"$title\", \"description\": \"$body\"}" ;;
+                *) payload="{}";;
             esac
             ;;
-        *)
-            error_ "Unsupported provider: $provider"
-            return 1
-            ;;
     esac
+
+    echo "$payload"
 }
 
 function miles_payload {
@@ -137,18 +102,13 @@ function miles_payload {
         esac
     done
 
+    local payload
     case "$action" in
-        create|update)
-            echo "{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date\"}"
-            ;;
-        list)
-            echo "{}"
-            ;;
-        *)
-            error_ "Unsupported action: $action for provider: $provider"
-            return 1
-            ;;
+        create|update) payload="{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date\"}" ;;
+        *) payload="{}";;
     esac
+
+    echo "$payload"
 }
 
 function label_payload {
@@ -165,17 +125,12 @@ function label_payload {
         esac
     done
 
+    local payload
     case "$action" in
-        create|update)
-            echo "{\"name\": \"$name\", \"color\": \"$color\", \"description\": \"$description\"}"
-            ;;
-        list)
-            echo "{}"
-            ;;
-        *)
-            error_ "Unsupported action: $action for provider: $provider"
-            return 1
-            ;;
+        create|update) payload="{\"name\": \"$name\", \"color\": \"$color\", \"description\": \"$description\"}" ;;
+        *) payload="{}";;
     esac
+
+    echo "$payload"
 }
 

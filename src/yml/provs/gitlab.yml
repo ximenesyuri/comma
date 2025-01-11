@@ -2,6 +2,9 @@ gitlab:
   version: v4
   base_url: https://gitlab.com/api/v4
   issues:
+    get:
+      method: GET
+      endpoint: projects/:repo/issues/:issue_id
     list:
       method: GET
       endpoint: projects/:repo/issues
@@ -25,6 +28,9 @@ gitlab:
         method: DELETE
         endpoint: projects/:repo/issues/:issue_id/notes/:note_id
   labels:
+    get:
+      method: GET
+      endpoint: projects/:repo/labels/:label_id
     list:
       method: GET
       endpoint: projects/:repo/labels
@@ -35,6 +41,9 @@ gitlab:
       method: DELETE
       endpoint: projects/:repo/labels/:label_id
   prs:
+    get:
+      method: GET
+      endpoint: projects/:repo/merge_requests/:merge_request_id
     list:
       method: GET
       endpoint: projects/:repo/merge_requests

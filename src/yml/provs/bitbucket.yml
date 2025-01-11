@@ -2,6 +2,9 @@ bitbucket:
   version: 2.0
   base_url: https://api.bitbucket.org/2.0/repositories
   issues:
+    get:
+      method: GET
+      endpoint: repositories/:repo/issues/:issue_id
     list:
       method: GET
       endpoint: repositories/:repo/issues
@@ -25,6 +28,9 @@ bitbucket:
         method: DELETE
         endpoint: repositories/:repo/issues/comments/:comment_id
   labels:
+    get:
+      method: GET
+      endpoint: repositories/:repo/labels/:id
     list:
       method: GET
       endpoint: repositories/:repo/labels
@@ -35,6 +41,9 @@ bitbucket:
       method: DELETE
       endpoint: repositories/:repo/labels/:id
   prs:
+    get:
+      method: GET
+      endpoint: repositories/:repo/pullrequests/:id
     list:
       method: GET
       endpoint: repositories/:repo/pullrequests

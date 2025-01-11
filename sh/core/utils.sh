@@ -170,6 +170,7 @@ function is_true_(){
 function is_error_(){
     error=$(echo $1 | grep "error:")
     if [[ -n "$error" ]]; then
+        echo -e "$1"
         return 0
     else
         return 1
@@ -224,28 +225,32 @@ function fold_(){
 
 function response_() {
     local response="$1"
-
     if [[ -z "$response" ]]; then
         error_ "Empty response received."
         return 1
     fi
 
-    local message=$(echo "$response" | jq -r '.message // empty' > /dev/null 2>&1)
-    
-    if [[ ! "$?" == "0" ]]; then
+    if echo "$response" | jq -e 'has("message")' >/dev/null; then
+        local message=$(echo "$response" | jq -r '.message')
+        if [[ -n "$message" ]]; then
+            error_ "API Error: $message"
+            return 1
+        fi
+    fi
+
+    if echo "$response" | jq -e 'has("status_code")' >/dev/null; then
+        local status_code=$(echo "$response" | jq -r '.status_code')
+        if [[ "$status_code" =~ ^(200|201|204)$ ]]; then
+            return 0
+        fi
+    fi
+
+    if echo "$response" | jq -e '. | has("error") | not' >/dev/null; then
         return 0
     fi
-    if [[ -n "$message" ]]; then 
-        return 1
-    fi
 
-    if [[ -n "$message" ]]; then
-        error_ "API Error: $message"
-        return 1
-    fi
-
-    return 0
-}
+    return 1
+} 
 
 function is_date_(){
     if [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
