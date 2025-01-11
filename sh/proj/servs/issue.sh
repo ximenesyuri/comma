@@ -26,7 +26,7 @@ function issue_ {
             change_state "$repo_" "$prov_" "closed"
             ;;
         comment|com|c)
-            source $dir_/issue_comment.sh
+            source $PROJ_DIR/servs/issue_comment.sh
             if is_error_ $(proj_allow comments $proj_); then
                 return 1
             fi 

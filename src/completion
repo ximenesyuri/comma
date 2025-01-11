@@ -1,6 +1,6 @@
 #! /bin/bash
 
-function _collect_prj(){
+function _comma_collect_prj(){
     local dir_=${BASH_SOURCE%/*}
     local main_=${dir_%/*}
     source $main_/sh/core/envs.sh
@@ -8,6 +8,20 @@ function _collect_prj(){
 }
 
 function _comma_compl_prj(){
+    declare -a prjs=()
+    declare -a sugg=()
+    prjs=($(_comma_collect_prj))
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        sugg=${prjs[*]}
+    fi
+    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
+}
+
+complete -F _comma_compl_prj ,ga
+complete -F _comma_compl_prj ,gc
+complete -F _comma_compl_prj ,gp
+
+function _comma_prj(){
     declare -A prj_prim_act=(
         ["git"]="add commit amend log diff"
         ["dot"]="."
@@ -49,18 +63,19 @@ function _prev(){
 function _comma_compl() {
     local scopes=("local" "cat" "proj")
     local helps=("-h" "--help") 
-    sugg=()
+    declare -a sugg=()
+    declare -a prjs=()
     if [[ $COMP_CWORD -eq 1 ]]; then
         sugg="${scopes[*]} ${helps[*]}"
     elif [[ "proj" =~ "$(_prev 1)" ]]; then
         prjs=($(_collect_prj))
         sugg="${prjs[*]}"
     elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     elif [[ "${prjs[@]}" =~ "$(_prev 2)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     elif [[ "${prjs[@]}" =~ "$(_prev 3)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     fi
     COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
 }
@@ -68,19 +83,36 @@ function _comma_compl() {
 complete -F _comma_compl comma
 
 function _,p_compl(){
-    prjs=($(_collect_prj))
-    sugg=()
+    declare -a prjs=()
+    prjs=($(_comma_collect_prj))
+    declare -a sugg=()
     if [[ $COMP_CWORD -eq 1 ]]; then
         sugg="${prjs[*]}"
     elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     elif [[ "${prjs[@]}" =~ "$(_prev 2)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     elif [[ "${prjs[@]}" =~ "$(_prev 3)" ]]; then
-        sugg=($(_comma_compl_prj $(_prev 1)))
+        sugg=($(_comma_prj $(_prev 1)))
     fi
     COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
 }
 
 complete -F _,p_compl ,p
 complete -F _,p_compl ,
+
+function _,g_compl(){
+    declare -a prjs=()
+    prjs=($(_comma_collect_prj))
+    declare -a git_act=()
+    git_act=(add commit amend log diff)
+    declare -a sugg=()
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        sugg="${prjs[*]}"
+    elif [[ "${prjs[@]}" =~ "$(_prev 1)" ]]; then
+        sugg="${git_act[*]}"
+    fi
+    COMPREPLY=( $(compgen -W "${sugg[*]}" -- "$(_prev 0)") )
+}
+
+complete -F _,g_compl ,g

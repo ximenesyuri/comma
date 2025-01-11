@@ -4,3 +4,24 @@ alias ,l="comma local"
 alias ,c="comma cat"
 alias ,p="comma proj"
 alias ,=",p"
+
+function ,g(){
+    comma proj "$1" git "${@:2}"
+}
+function ,ga(){
+    comma proj "$1" git add
+}
+
+function ,gc(){
+    message="${@:2}"
+    comma proj "$1" git commit "$message"
+}
+
+function ,gb(){
+    comma proj "$1" git branch "$2"
+}
+
+function ,gp(){
+    comma proj "$1" git push "$2"
+}
+
