@@ -72,6 +72,22 @@ gitlab:
       delete:
         method: DELETE
         endpoint: projects/:repo/merge_requests/:merge_request_id/notes/:note_id
+  milestones:
+    get:
+      method: GET
+      endpoint: projects/:repo/milestones/:milestone_id
+    list:
+      method: GET
+      endpoint: projects/:repo/milestones
+    create:
+      method: POST
+      endpoint: projects/:repo/milestones
+    edit:
+      method: PUT
+      endpoint: projects/:repo/milestones/:milestone_id
+    delete:
+      method: DELETE
+      endpoint: projects/:repo/milestones/:milestone_id
   metadata:
     colabs:
       method: GET
@@ -89,3 +105,4 @@ gitlab:
       endpoint: projects/:repo
       body:
         response_field: name
+

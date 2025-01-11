@@ -15,6 +15,16 @@ function call_api {
     local data="$4"
     local body_entries="$5"
 
+    if is_null_ "$method"; then
+        error_  "API Error: Received a null method."
+        if is_null_ "$endpoint"; then
+            error_  "API Error: Received a null endpoint."
+            return 1
+        fi
+        return 1
+    fi
+    
+    
     local base_url=$(get_api "$provider" ".base_url")
     local version=$(get_api "$provider" ".version")
 
@@ -39,7 +49,7 @@ function call_api {
             if [[ -n "$GITHUB_TOKEN" ]]; then
                 token_header="Authorization: Bearer $GITHUB_TOKEN"
             else
-                error_ "GITHUB_TOKEN is not set."
+                error_ "API Error: GITHUB_TOKEN is not set."
                 return 1
             fi
             accept_header="Accept: application/vnd.github+json"
@@ -49,7 +59,7 @@ function call_api {
             if [[ -n "$GITLAB_TOKEN" ]]; then
                 token_header="PRIVATE-TOKEN: $GITLAB_TOKEN"
             else
-                error_ "GITLAB_TOKEN is not set."
+                error_ "API Error: GITLAB_TOKEN is not set."
                 return 1
             fi
             ;;
@@ -57,7 +67,7 @@ function call_api {
             if [[ -n "$GITEA_TOKEN" ]]; then
                 token_header="Authorization: token $GITEA_TOKEN"
             else
-                error_ "GITEA_TOKEN is not set."
+                error_ "API Error: GITEA_TOKEN is not set."
                 return 1
             fi
             ;;
@@ -65,12 +75,12 @@ function call_api {
             if [[ -n "$BITBUCKET_USERNAME" && -n "$BITBUCKET_TOKEN" ]]; then
                 headers+=("-u" "$BITBUCKET_USERNAME:$BITBUCKET_TOKEN")
             else
-                error_ "BITBUCKET_USERNAME or BITBUCKET_TOKEN is not set."
+                error_ "API Error: BITBUCKET_USERNAME or BITBUCKET_TOKEN is not set."
                 return 1
             fi
             ;;
         *)
-            error_ "Provider '$provider' is not supported."
+            error_ "API Error: Provider '$provider' is not supported."
             return 1
             ;;
     esac
@@ -85,7 +95,16 @@ function call_api {
         echo "$response"
     else
         error_ "Unable to parse API response."
-        error_ "Response:"
+        debug_ "PROVIDER: $provider"
+        debug_ "ENDPOINT: $endpoint"
+        debug_ "METHOD: $method"
+        debug_ "DATA: $data"
+        debug_ "BODY: $body_entries"
+        debug_ "HEADERS:"
+        for header in "${headers[@]}"; do
+            debug_ "- $header"
+        done
+        debug_ "RESPONSE:"
         line_
         echo -e "$response"
         line_

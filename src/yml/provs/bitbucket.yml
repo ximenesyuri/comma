@@ -72,6 +72,22 @@ bitbucket:
       delete:
         method: DELETE
         endpoint: repositories/:repo/pullrequests/comments/:comment_id
+  milestones:
+    get:
+      method: GET
+      endpoint: repositories/:repo/milestones/:milestone_id
+    list:
+      method: GET
+      endpoint: repositories/:repo/milestones
+    create:
+      method: POST
+      endpoint: repositories/:repo/milestones
+    edit:
+      method: PUT
+      endpoint: repositories/:repo/milestones/:milestone_id
+    delete:
+      method: DELETE
+      endpoint: repositories/:repo/milestones/:milestone_id
   metadata:
     colabs:
       method: GET

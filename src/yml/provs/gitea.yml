@@ -72,6 +72,22 @@ gitea:
       delete:
         method: DELETE
         endpoint: repos/:repo/pulls/comments/:comment_id
+  milestones:
+    get:
+      method: GET
+      endpoint: repos/:repo/milestones/:milestone_id
+    list:
+      method: GET
+      endpoint: repos/:repo/milestones
+    create:
+      method: POST
+      endpoint: repos/:repo/milestones
+    edit:
+      method: PATCH
+      endpoint: repos/:repo/milestones/:milestone_id
+    delete:
+      method: DELETE
+      endpoint: repos/:repo/milestones/:milestone_id
   metadata:
     colabs:
       method: GET

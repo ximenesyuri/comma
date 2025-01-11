@@ -72,6 +72,10 @@ function warn_() {
     echo -e "${WARN}warn:${RESET}" "$@"
 }
 
+function debug_() {
+    echo -e "${WARN}DEBUG:${RESET}" "$@"
+}
+
 function line_(){
     secondary_ "$LINE"
 }

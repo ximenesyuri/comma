@@ -167,6 +167,15 @@ function is_true_(){
     fi
 }
 
+function is_null_(){
+    if [[ -z "$1" ]] ||
+       [[ "$1" == "null" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function is_error_(){
     error=$(echo $1 | grep "error:")
     if [[ -n "$error" ]]; then
@@ -226,7 +235,7 @@ function fold_(){
 function response_() {
     local response="$1"
     if [[ -z "$response" ]]; then
-        error_ "Empty response received."
+        error_ "API Error: Empty response received."
         return 1
     fi
 
@@ -253,7 +262,8 @@ function response_() {
 } 
 
 function is_date_(){
-    if [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    if [[ -n "$1" ]] && 
+       [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
         error_ "Invalid date format. Use YYYY-MM-DD."
         return 1
     fi
@@ -261,9 +271,7 @@ function is_date_(){
 }
 
 function date_(){
-    if [[ -z "$1" ]]; then
-        error_ "Missing date"
-    elif is_date_ $1; then
+    if is_date_ $1; then
         echo "${1}T00:00:00Z"
     fi
 }

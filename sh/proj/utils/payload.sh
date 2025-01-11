@@ -103,10 +103,18 @@ function miles_payload {
     done
 
     local payload
-    case "$action" in
-        create|update) payload="{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date\"}" ;;
-        *) payload="{}";;
-    esac
+    if [[ -n "$due_date" ]]; then
+        case "$action" in
+            create|update) payload="{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date\"}" ;;
+            *) payload="{}";;
+        esac
+    else
+        case "$action" in
+            create|update) payload="{\"title\": \"$title\", \"description\": \"$description\"}" ;;
+            *) payload="{}";;
+        esac
+    fi
+
 
     echo "$payload"
 }
