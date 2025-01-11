@@ -232,35 +232,6 @@ function fold_(){
     fi
 }
 
-function response_() {
-    local response="$1"
-    if [[ -z "$response" ]]; then
-        error_ "API Error: Empty response received."
-        return 1
-    fi
-
-    if echo "$response" | jq -e 'has("message")' >/dev/null; then
-        local message=$(echo "$response" | jq -r '.message')
-        if [[ -n "$message" ]]; then
-            error_ "API Error: $message"
-            return 1
-        fi
-    fi
-
-    if echo "$response" | jq -e 'has("status_code")' >/dev/null; then
-        local status_code=$(echo "$response" | jq -r '.status_code')
-        if [[ "$status_code" =~ ^(200|201|204)$ ]]; then
-            return 0
-        fi
-    fi
-
-    if echo "$response" | jq -e '. | has("error") | not' >/dev/null; then
-        return 0
-    fi
-
-    return 1
-} 
-
 function is_date_(){
     if [[ -n "$1" ]] && 
        [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then

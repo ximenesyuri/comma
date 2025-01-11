@@ -127,14 +127,14 @@ function new_milestone {
            return 1
        fi
 
-       local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+       local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
        local milestone_id=$(echo "$selected" | awk '{print $1}')
        if [[ -z "$milestone_id" ]]; then
            error_ "No milestone selected."
            return 1
        fi
 
-       local current=$(echo "$milestones_json" | jq -r ".[] | select(.id == $milestone_id)")
+       local current=$(echo "$milestones_json" | jq -r ".[] | select(.number == $milestone_id)")
        local current_title=$(echo "$current" | jq -r '.title')
        local current_description=$(echo "$current" | jq -r '.description')
        local current_due_date=$(echo "$current" | jq -r '.due_on')
@@ -179,7 +179,7 @@ function remove_milestone {
         return 1
     fi
 
-    local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+    local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
     local milestone_id=$(echo "$selected" | awk '{print $1}')
     if [[ -z "$milestone_id" ]]; then
         error_ "No milestone selected."
@@ -207,7 +207,7 @@ function set_milestone {
         return 1
     fi
 
-    local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.id) \(.title)"' | fzf $FZF_GEOMETRY)
+    local selected=$(echo "$milestones_json" | jq -r '.[] | "\(.number) \(.title)"' | fzf $FZF_GEOMETRY)
     local milestone_id=$(echo "$selected" | awk '{print $1}')
     if [[ -z "$milestone_id" ]]; then
         error_ "No milestone selected."
@@ -219,7 +219,7 @@ function set_milestone {
         return 1
     fi
 
-    local selected_items=$(echo "$items_json" | jq -r '.[] | "\(.id) \(.title)"' | fzf --multi $FZF_GEOMETRY)
+    local selected_items=$(echo "$items_json" | jq -r '.[] | "\(.number) \(.title)"' | fzf --multi $FZF_GEOMETRY)
     if [[ -z "$selected_items" ]]; then
         error_ "No items selected."
         return 1
