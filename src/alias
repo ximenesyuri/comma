@@ -22,6 +22,6 @@ function ,gb(){
 }
 
 function ,gp(){
-    comma proj "$1" git push "$2"
+    comma proj "$1" git push "$2" "$3"
 }
 

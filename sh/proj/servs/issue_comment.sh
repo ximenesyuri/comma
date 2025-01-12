@@ -24,7 +24,7 @@ function select_issue {
     local method=$(method_ "issues" "$prov_" "list")
     local issues=$(call_api "$prov_" "$method" "$endpoint")
 
-    if [[ $? -ne 0 || -z "$issues" ]]; then
+    if is_null_ "$issues"; then
         error_ "Could not fetch issues."
         return 1
     fi
@@ -38,15 +38,20 @@ function fetch_issue_comments {
     local prov_="$2"
     local issue_number="$3"
 
-    local endpoint=$(endpoint_ "comment" "$prov_" "$repo_" "list" "$issue_number")
-    local method=$(method_ "issues" "$prov_" "comments")
+    local endpoint=$(endpoint_ "issues.comments" "$prov_" "$repo_" "list" "$issue_number")
+    if is_error_ $endpoint; then
+        return 1
+    fi
+    local method=$(method_ "issues.comments" "$prov_" "list")
+    if is_error_ $method; then
+        return 1
+    fi
 
     local response=$(call_api "$prov_" "$method" "$endpoint")
 
-    if echo "$response" | jq empty 2>/dev/null; then
+    if response_ "$response"; then
         echo "$response"
     else
-        error_ "Failed to fetch comments or invalid response. Response: $response"
         return 1
     fi
 }
@@ -58,8 +63,7 @@ function list_comments {
     local issue_number=$(select_issue "$repo_" "$prov_")
     if [[ -n "$issue_number" ]]; then
         local comments_json=$(fetch_issue_comments "$repo_" "$prov_" "$issue_number")
-        if [[ -n "$(echo "$comments_json" | grep error:)" ]]; then
-            echo "$comments_json"
+        if is_error_ "$comments_json"; then
             return 1
         fi
 

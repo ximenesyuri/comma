@@ -1,8 +1,7 @@
 function git_ {
     local proj="$1"
     local action="$2"
-    local branch_name="$3"
-    shift 3
+    shift 2
     local proj_path
     proj_path=$(yq e ".local.$proj.spec.path" "$YML_LOCAL" | envsubst)
 
@@ -37,7 +36,7 @@ function git_ {
             git_diff
             ;;
         b|branch)
-            git_branch "$branch_name"
+            git_branch "$proj" "$@"
             ;;
         *)
             error_ "Unsupported git action: $action."
@@ -59,7 +58,7 @@ function git_add {
 }
 
 function git_commit {
-    local proj="$1"
+    local proj_="$1"
     shift
     local message="$@"
     
@@ -75,7 +74,7 @@ function git_commit {
     if [[ ! "$?" == "0" ]]; then
         return 1
     fi
-    done_ "'$proj_': Changes have been commiteds."
+    done_ "'$proj_': Changes have been commited."
 }
 
 function git_branch {

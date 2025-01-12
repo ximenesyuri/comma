@@ -6,9 +6,11 @@ function method_() {
     local endpoint_key
     case "$type_" in
         issue|issues) endpoint_key="issues";;
+        issue.comment|issues.comment|issue.comments|issues.comments) endpoint_key="issues.comments";;
         pr|prs) endpoint_key="prs";;
+        pr.comment|prs.comments|pr.comments|prs.comment) endpoint_key="prs.comments";;
         label|labels) endpoint_key="labels";;
-        milestone|milestones) endpoint_key="milestones";;
+        miles|milestone|milestones) endpoint_key="milestones";;
         *) error_ "Unsupported type: $type_"; return 1;;
     esac
 
@@ -21,3 +23,4 @@ function method_() {
 
     echo "$method"
 }
+
