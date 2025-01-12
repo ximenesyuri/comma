@@ -118,13 +118,13 @@ function response_() {
 
     if [[ -z "$response" ]]; then
         warn_ "API Warn: Empty response received."
-        return 1
+        return 0
     fi
 
     local response_type
     response_type=$(echo "$response" | jq -r 'type')
 
-    if [[ "$response_type" == "object" ]]; then
+    if [[ "$response_type" != "array" ]]; then
         if echo "$response" | jq -e 'has("message")' >/dev/null; then
             local message=$(echo "$response" | jq -r '.message')
             if [[ -n "$message" ]]; then
@@ -150,11 +150,9 @@ function response_() {
                 return 1
             fi
         fi
-
-    elif [[ "$response_type" == "array" ]]; then
+    else 
         return 0
     fi
-
-    error_ "API Error: Unexpected response format."
-    return 1
+ 
+    return 0
 }

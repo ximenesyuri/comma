@@ -37,6 +37,14 @@ function proj_allow(){
                     return 1
                 fi
                 ;;
+            miles|milestone|milestones)
+                if is_true_ $(yq e "$proj_str.spec.services.miles"  $YML_PROJECTS); then
+                    return 0
+                else
+                    error_ "Project '$proj_' does not allow miles."
+                    return 1
+                fi
+                ;;
             label|labels)
                 if is_true_ $(yq e "$proj_str.spec.services.labels"  $YML_PROJECTS); then
                     return 0

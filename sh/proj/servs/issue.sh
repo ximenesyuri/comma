@@ -37,15 +37,7 @@ function issue_ {
             ;;
         edit|e)
             edit_issue "$repo_" "$prov_"
-            ;;
-        browse|b)
-            source $PROJ_DIR/utils/url.sh
-            browse_issue "$repo_" "$prov_"
-            ;;
-        Browse|BROWSE|B)
-            source $PROJ_DIR/utils/url.sh
-            BROWSE_issue "$repo_" "$prov_"
-            ;;
+            ;; 
         *)
             error_ "Issue actions: 'new', 'info', 'list', 'close', 'open', 'edit', 'browse'."
             return 1
@@ -217,26 +209,26 @@ function show_issue {
     local updated_at=$(echo "$issue_" | jq -r '.updated_at // "null"')
     local labels=$(echo "$issue_" | jq -r '.labels | map(.name) | join(", ") // "None"')
     local comments_count=$(echo "$issue_" | jq -r '.comments // "0"')
-    local body=$(echo "$issue_" | jq -r '.body // "No description available." | @text' | fold_ | sed 's/^/    > /')
+    local body=$(echo "$issue_" | jq -r '.body // "No description available." | @text' )
     local assignee=$(echo "$issue_" | jq -r '.assignee.login // "none"')
 
     local comments_json=$(fetch_comments "$repo_" "$prov_" "$number_")
 
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Project:" "$proj_"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Repo:" "$full_repo"
+    entry_ "project" "$proj_"
+    entry_ "repo" "$full_repo"
     line_
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Issue ID:" "$number_"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Url:" "$url"
+    entry_ "ID" "$number_"
+    entry_ "url" "$url"
     line_
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Title:" "$title"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Author:" "$author"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Creation:" "$created_at"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Modif:" "$updated_at"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Labels:" "$labels"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Assignee:" "$assignee"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Comments:" "$comments_count"
-    printf "${PRIMARY}%-*s${RESET}\n" $LABEL_WIDTH "Description:"
-    echo -e "$body"
+    entry_ "title" "$title"
+    entry_ "author" "$author"
+    entry_ "creation" "$created_at"
+    entry_ "modif" "$updated_at"
+    entry_ "labels" "$labels"
+    entry_ "assignee" "$assignee"
+    entry_ "comments" "$comments_count"
+    entry_ "description" " "
+    print_ "$body" 
     line_
 
     if [[ -n "$comments_json" && "$(echo "$comments_json" | jq empty 2>/dev/null)" == "" ]]; then
@@ -245,7 +237,7 @@ function show_issue {
         echo "$comments_json" | jq -c '.[]' | nl -w1 -s'. ' | while read -r line; do
             local comment_index=$(echo "$line" | cut -d'.' -f1)
             local comment_json=$(echo "$line" | cut -d'.' -f2-)
-            local comment_body=$(echo "$comment_json" | jq -r '.body // "Empty comment" | @text' | fold_ | sed 's/^/    > /')
+            local comment_body=$(echo "$comment_json" | jq -r '.body // "Empty comment" | @text' | fold_ | sed 's/^/    | /')
 
             line_
             echo "Comment #$comment_index"
@@ -270,18 +262,18 @@ function new_issue {
     local labels=$(fetch_labels "$repo_" "$prov_")
     local label_names=$(echo "$labels" | jq -r '.[].name')
 
-    primary_ "Title:"
+    primary_ "title:"
     input_ -v title
     line_
-    primary_ "Description:"
+    primary_ "description:"
     input_ -e md -v description
     line_
-    primary_ "Labels:"
+    primary_ "labels:"
     selected_labels=$(echo "$label_names" | fzf --multi $FZF_GEOMETRY)
 
     selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
-    primary_ "Assign:"
+    primary_ "assign:"
     input_ -v assign_user
 
     local endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "create")
@@ -340,20 +332,20 @@ function edit_issue {
     local current_labels=$(echo "$issue" | jq -r '[.labels[]?.name] | join(", ") // "null"')
     local current_assignee=$(echo "$issue" | jq -r '.assignee?.login // ""')
 
-    echo -e ${PRIMARY}Title:${RESET} "$current_title"
-    primary_ "New Title:"
+    primary -c "title:" -n "$current_title"
+    primary_ "new title:"
     input_ -v new_title
     new_title=${new_title:-$current_title}
 
     line_
-    echo -e ${PRIMARY}Description:${RESET} $(fold_ "$current_body")
-    primary_ "New Description:"
+    primary -c "desc:" -n "$(fold_ "$current_body")"
+    primary_ "new desc:"
     input_ -e md -v new_body
     new_body=${new_body:-$current_body}
 
     line_
-    echo -e ${PRIMARY}Labels:${RESET} "$current_labels"
-    primary_ "New Labels:"
+    primary -c "labels:" -n "$current_labels"
+    primary_ "new labels:"
 
     local labels=$(fetch_labels "$repo_" "$prov_")
     local label_names=$(echo "$labels" | jq -r '.[].name')
@@ -361,8 +353,8 @@ function edit_issue {
     local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
     line_
-    echo -e ${PRIMARY}Assignee:${RESET} "$current_assignee"
-    primary_ -c "Assignee:" -n "(leave blank to unassign)"
+    primary -c "assignee:" -n "$current_assignee"
+    primary_ -c "assignee:" -n "(blank to unassign)"
     input_ -v new_assignee
 
     local json_assignee_value="null"
@@ -430,24 +422,3 @@ function change_state {
         fi
     done
 }
-
-function browse_issue() {
-    local repo_="$1"
-    local prov_="$2"
-    local url=$(url_ "issue" "$prov_" "$repo_")
-    browser_ "$url"
-}
-
-function BROWSE_issue() {
-    local repo_="$1"
-    local prov_="$2"
-    local issues=$(list_issues "$repo_" "$prov_")
-    local selection_=$(echo "$issues" | fzf $FZF_GEOMETRY --inline-info)
-    if [[ -n "$selection_" ]]; then
-        local url=$(url_ "issue" "$prov_" "$repo_" "$selection_")
-        browser_ "$url"
-    else
-        error_ "No issue selected."
-    fi
-}
-

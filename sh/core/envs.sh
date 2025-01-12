@@ -19,11 +19,12 @@ local dot_=$(yq e '.conf.commands.dot // ""' $YML_CONF)
 local main_=$(yq e '.conf.commands.main // ""' $YML_CONF)
 local theme_=$(yq e '.conf.general.theme // ""' $YML_CONF)
 
-declare -a tools_=(editor browser pager)
+declare -a tools_=(editor browser pager printer)
 declare -A default_tools=(
     [editor]="vim"
     [browser]="firefox"
     [pager]="less"
+    [printer]="cat"
 )
 
 for tool in ${tools_[@]}; do
@@ -32,14 +33,13 @@ for tool in ${tools_[@]}; do
     TOOL_ENV="COMMA_TOOLS_${TOOL}"
     _tool=${tool}_
     default_tool=${default_tools[$tool]}
-
     if [[ -n "${!TOOL_ENV}" ]]; then
         eval "${TOOL_}=${!TOOL_ENV}"
     elif [[ -n "${!_tool}" ]]; then
         eval "${TOOL_}=${!_tool}"
-    elif [[ -n "$TOOL" ]]; then
-        eval "${TOOL_}=${TOOL}"
-    elif [[ -c "${default_tool}" ]]; then
+    elif [[ -n "${!TOOL}" ]]; then
+        eval "${TOOL_}=${!TOOL}"
+    elif command -v "${default_tool}" > /dev/null 2>&1; then
         eval "${TOOL_}=${default_tool}"
     fi
 done

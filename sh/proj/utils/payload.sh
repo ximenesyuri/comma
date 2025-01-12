@@ -8,7 +8,7 @@ function payload_() {
         issue|issues) issue_payload "$provider" "$action" "$@" ;;
         pr|prs) pr_payload "$provider" "$action" "$@" ;;
         label|labels) label_payload "$provider" "$action" "$@" ;;
-        milestone|milestones) miles_payload "$provider" "$action" "$@" ;;
+        miles|milestone|milestones) miles_payload "$provider" "$action" "$@" ;;
         *) error_ "Unsupported type: $type_"; return 1 ;;
     esac
 }
@@ -97,7 +97,7 @@ function miles_payload {
     for arg in "$@"; do
         case $arg in
             title=*) title="${arg#*=}" ;;
-            desc=*) description="${arg#*=}" ;;
+            desc=*|description=*) description="${arg#*=}" ;;
             due_date=*) due_date="${arg#*=}" ;;
         esac
     done
@@ -105,17 +105,15 @@ function miles_payload {
     local payload
     if [[ -n "$due_date" ]]; then
         case "$action" in
-            create|update) payload="{\"title\": \"$title\", \"description\": \"$description\", \"due_on\": \"$due_date\"}" ;;
+            create|update) payload="{\"title\": \"$title\", \"description\": $description, \"due_on\": \"$due_date\"}" ;;
             *) payload="{}";;
         esac
     else
         case "$action" in
-            create|update) payload="{\"title\": \"$title\", \"description\": \"$description\"}" ;;
+            create|update) payload="{\"title\": \"$title\", \"description\": $description}" ;;
             *) payload="{}";;
         esac
     fi
-
-
     echo "$payload"
 }
 

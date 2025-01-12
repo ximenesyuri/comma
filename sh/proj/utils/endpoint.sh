@@ -29,7 +29,7 @@ function endpoint_ {
         github:pr:*|github:prs:*) id_key=":number";;
         github:issue:*|github:issues:*) id_key=":issue_number";;
         github:label:*|github:labels:*) id_key=":name";;
-        github:milestone:*|github:miles:*) id_key=":milestone_number";;
+        github:milestone:*|github:miles:*|github:milestones:*) id_key=":milestone_number";;
         github:issue.comments:list|github:issues.comments:list) id_key=":issue_number";;
         github:issue.comments:create|github:issues.comments:create) id_key=":issue_number";;
         github:issue.comments:edit|github:issues.comments:edit) id_key=":comment_id";;

@@ -206,15 +206,15 @@ function display_comment {
     local author=$(echo "$comment_json" | jq -r '.user.login // "Unknown"')
     local created_at=$(echo "$comment_json" | jq -r '.created_at // "Unknown"')
     local updated_at=$(echo "$comment_json" | jq -r '.updated_at // "Unknown"')
-    local body=$(echo "$comment_json" | jq -r '.body // "No content." | @text' | fold_ | sed 's/^/    > /')
+    local body=$(echo "$comment_json" | jq -r '.body // "No content." | @text')
 
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "ID:" "$id"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "author:" "$author"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "creation:" "$created_at"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "modif:" "$updated_at"
+    entry_ "ID" "$id"
+    entry_ "author" "$author"
+    entry_ "creation" "$created_at"
+    entry_ "modif" "$updated_at"
     line_
-    printf "${PRIMARY}%-*s${RESET}\n" $LABEL_WIDTH "Contents:"
-    echo -e "$body"
+    entry_ "Contents" " "
+    print_ "$body"
     line_
 }
 

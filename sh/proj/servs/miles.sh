@@ -4,9 +4,9 @@ function miles_ {
     local act_="$2"
     shift 2
 
-    # if is_error_ $(proj_allow miles $proj_); then
-    #     return 1
-    # fi
+    if is_error_ $(proj_allow miles $proj_); then
+        return 1
+    fi
 
     local repo_=$(proj_get repo $proj_)
     local prov_=$(proj_get prov $proj_)
@@ -66,20 +66,21 @@ function show_milestone {
     local milestone_id="$3"
 
     local endpoint=$(endpoint_ "milestones" "$prov_" "$repo_" "get" "$milestone_id")
-    local method=$(method_ "milestones" "$prov_" "get")
+    local method=$(method_ "milestone" "$prov_" "get")
     local response=$(call_api "$prov_" "$method" "$endpoint") 
 
     if is_error_ "$response"; then
         return 1
     fi
 
-    local title=$(echo "$response" | jq -r '.title // "No Title"')
-    local description=$(echo "$response" | jq -r '.description // "No Description"')
-    local due_date=$(echo "$response" | jq -r '.due_on // "No Due Date"')
+    local title=$(echo "$response" | jq -r '.title // "none"')
+    local description=$(echo "$response" | jq -r '.description // "none" | @text')
+    local due_date=$(echo "$response" | jq -r '.due_on // "none"')
 
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Title:" "$title"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Description:" "$description"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Due Date:" "$due_date"
+    entry_  "Title" "$title"
+    entry_ "Due Date" "$due_date"
+    entry_ "Description" " " 
+    print_ "$description"    
     line_
 }
 
@@ -96,7 +97,6 @@ function new_milestone {
        primary_ "Due (YYYY-MM-DD) [Optional]:"
        read -e -p "> " due_date
 
-       # Format due_date if provided
        local formatted_due_date=""
        if [[ -n "$due_date" ]]; then
            if ! formatted_due_date=$(date_ "$due_date"); then
@@ -108,6 +108,7 @@ function new_milestone {
        local endpoint=$(endpoint_ "milestone" "$prov_" "$repo_" "create")
        local method=$(method_ "milestones" "$prov_" "create")
        local json_payload=$(payload_ "milestone" "$prov_" "create" title="$title" description="$description" due_date="$formatted_due_date")
+       echo $json_payload
 
        local response=$(call_api "$prov_" "$method" "$endpoint" "$json_payload")
        if response_ "$response"; then

@@ -22,25 +22,6 @@ function deps_ {
     done
 }
 
-function editor_ {
-    local file="$1"
-    if [[ -z "${EDITOR_}" ]]; then
-        error_ 'No suitable editor found.'
-        return 1
-    fi
-    "${EDITOR_}" "$file"
-}
-
-function browser_() {
-    local url="$1"
-    if [[ -z "$BROWSER_" ]]; then
-        error_ "No suitable browser found."
-        return 1
-    fi
-    "$BROWSER_" "$url"
-}
-
-
 function input_ {
     local prompt="> "
     local extension="txt"
@@ -177,7 +158,7 @@ function is_null_(){
 }
 
 function is_error_(){
-    error=$(echo $1 | grep "error:")
+    error=$(echo "$1" | grep "error:")
     if [[ -n "$error" ]]; then
         echo -e "$1"
         return 0
@@ -224,14 +205,6 @@ function fg_(){
     echo "\033[38;2;${r_};${g_};${b_}m"
 }
 
-function fold_(){
-    if [[ -z "$1" ]]; then
-        fold -s -w $TEXT_WIDTH
-    else
-        echo "$1" | fold -s -w $TEXT_WIDTH
-    fi
-}
-
 function is_date_(){
     if [[ -n "$1" ]] && 
        [[ ! $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
@@ -272,4 +245,34 @@ function list_ {
         done
     fi
 }
+
+function fold_() {
+    local line prefix
+    while IFS= read -r line; do
+        local indentation=$(echo "$line" | grep -o '^[[:space:]]*')
+        if [[ "$line" =~ ^[[:space:]]*([0-9]+\.\ |[-*]\ )[[:space:]]* ]]; then
+            prefix=$indentation$'\t'
+        else
+            prefix=$indentation
+        fi
+        echo "$line" | fold -s -w "$TEXT_WIDTH" | sed "2,\$s/^/$prefix/"
+    done
+}
+
+function print_() {
+    local temp=$(mktemp --suffix=".md")
+    echo -e "$1" >> "$temp"
+
+    if [[ "$PRINTER_" == "cat" ]]; then
+        while IFS= read -r line; do
+            echo "$line" | fold_
+        done < "$temp" | sed 's/^/    | /'
+    elif [[ "$PRINTER_" == "bat" ]]; then
+        bat "$temp" --terminal-width=90 --wrap='auto' --style="numbers,grid"
+    else
+        error_ "PRINTER_ not defined."
+        return 1
+    fi
+}
+
 
