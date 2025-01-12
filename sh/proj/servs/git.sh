@@ -1,7 +1,8 @@
 function git_ {
     local proj="$1"
     local action="$2"
-    local param="$3"
+    local branch_name="$3"
+    shift 3
     local proj_path
     proj_path=$(yq e ".local.$proj.spec.path" "$YML_LOCAL" | envsubst)
 
@@ -18,13 +19,13 @@ function git_ {
             git_add "$proj"
             ;;
         c|commit)
-            git_commit "$proj" "$param"
+            git_commit "$proj" "$@"
             ;;
         p|push)
-            git_push "$param" "$proj"
+            git_push "$proj" "$@"
             ;;
         P|pull)
-            git_pull "$param" "$proj"
+            git_pull "$proj" "$@"
             ;;
         A|amend)
             git_amend
@@ -34,6 +35,9 @@ function git_ {
             ;;
         d|diff)
             git_diff
+            ;;
+        b|branch)
+            git_branch "$branch_name"
             ;;
         *)
             error_ "Unsupported git action: $action."
@@ -46,13 +50,12 @@ function git_ {
     return 0
 }
 
-
 function git_add {
     git add .
     if [[ ! "$?" == "0" ]]; then
         return 1
     fi
-    done_ "Changes added to stage in proj '$1'."
+    done_ "'$1': Changes added to stage."
 }
 
 function git_commit {
@@ -72,37 +75,79 @@ function git_commit {
     if [[ ! "$?" == "0" ]]; then
         return 1
     fi
-    done_ "Commit has been made in proj '$proj'."
+    done_ "'$proj_': Changes have been commiteds."
+}
+
+function git_branch {
+    local proj_="$1"
+    local branch="$2"
+
+    if [[ -n "$branch" ]]; then
+        if git rev-parse --verify "$branch" >/dev/null 2>&1; then
+            git checkout "$branch"
+            done_ "'$proj_': Switched to branch '$branch'."
+        else
+            info_ "Branch '$branch_name' does not exist."
+            primary_ -c "Create and switch to it?" -n "(y/n)"
+            read -r response
+            if [[ "$response" == "y" ]]; then
+                git checkout -b "$branch" > /dev/null 2>&1
+                done_ "'$proj_': Created and switched to branch '$branch'."
+            else
+                error_ "Branch switch cancelled."
+            fi
+        fi
+    else
+        local selected_branch
+        selected_branch=$(git branch --list | tr -d ' ' | fzf $FZF_GEOMETRY)
+        if [[ -n "$selected_branch" ]]; then
+            git checkout "$selected_branch"
+            done_ "'$proj_': Switched to branch '$branch'."
+        else
+            error_ "No branch selected."
+        fi
+    fi
 }
 
 function git_push {
-    local branch="$1"
-    local proj="$2"
+    local branch="$2"
+    local remote="$3"
+    local proj="$1"
 
     if [[ -z "$branch" ]]; then
         error_ "Branch name required."
         return 1
     fi
-    git push origin "$branch"
+    if [[ -z "$remote" ]]; then
+        error_ "Remote required."
+        return 1 
+    fi
+    git push "$remote" "$branch"
     if [[ ! "$?" == "0" ]]; then
         return 1
     fi
-    done_ "Pushed branch '$branch' to origin in proj '$proj'."
+    done_ "'$proj': Pushed branch '$branch' to '$remote'."
+
 }
 
 function git_pull {
-    local branch="$1"
-    local proj="$2"
+    local branch="$2"
+    local proj="$1"
+    local remote="$3"
 
     if [[ -z "$branch" ]]; then
         error_ "Branch name required."
         return 1
     fi
-    git pull origin "$branch"
+    if [[ -z "$remote" ]]; then
+        error_ "Remote required."
+        return 1 
+    fi
+    git pull "$remote" "$branch"
     if [[ ! "$?" == "0" ]]; then
         return 1
-    fi
-    done_ "Pulled origin to branch '$branch' in proj '$proj'."
+    fi 
+    done_ "'$proj': Pulled '$remote' to branch '$branch'."
 }
 
 function git_amend {
