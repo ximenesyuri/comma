@@ -21,9 +21,9 @@ function primary_() {
     done
 
     if [ ${#colored_text[@]} -eq 0 ] && [ ${#normal_text[@]} -eq 0 ]; then
-        echo -e "${PRIMARY}${parsed_args[*]}${RESET}"
+        echo -e "${COLOR_PRIMARY}${parsed_args[*]}${COLOR_RESET}"
     else
-        echo -e "${PRIMARY}${colored_text[*]}${RESET} ${normal_text[*]}"
+        echo -e "${COLOR_PRIMARY}${colored_text[*]}${COLOR_RESET} ${normal_text[*]}"
     fi
 }
 
@@ -50,41 +50,45 @@ function secondary_() {
     done
 
     if [ ${#colored_text[@]} -eq 0 ] && [ ${#normal_text[@]} -eq 0 ]; then
-        echo -e "${SECONDARY}${parsed_args[*]}${RESET}"
+        echo -e "${COLOR_SECONDARY}${parsed_args[*]}${COLOR_RESET}"
     else
-        echo -e "${SECONDARY}${colored_text[*]}${RESET} ${normal_text[*]}"
+        echo -e "${COLOR_SECONDARY}${colored_text[*]}${COLOR_RESET} ${normal_text[*]}"
     fi
 }
 
 function error_() {
-    echo -e "${ERROR}error:${RESET}" "$@"  
+    echo -e "${COLOR_ERROR}${TEXT_ERROR}:${COLOR_RESET}" "$@"  
 }
 
 function done_() {
-    echo -e "${DONE}done:${RESET}" "$@"  
+    echo -e "${COLOR_DONE}${TEXT_DONE}:${COLOR_RESET}" "$@"  
 }
 
 function info_() {
-    echo -e "${INFO}info:${RESET}" "$@"  
+    echo -e "${COLOR_INFO}${TEXT_INFO}:${COLOR_RESET}" "$@"  
 }
 
 function warn_() {
-    echo -e "${WARN}warn:${RESET}" "$@"
+    echo -e "${COLOR_WARN}${TEXT_WARN}:${COLOR_RESET}" "$@"
 }
 
 function debug_() {
-    echo -e "${WARN}DEBUG:${RESET}" "$@"
+    echo -e "${COLOR_DEBUG}${TEXT_DEBUG}:${COLOR_RESET}" "$@"
 }
 
 function line_(){
-    secondary_ "$LINE"
+    echo -e "${COLOR_LINE}${TEXT_LINE}${COLOR_RESET}"
+}
+
+function double_(){
+    echo -e "${COLOR_DOUBLE_LINE}${TEXT_DOUBLE_LINE}${COLOR_RESET}"
 }
 
 function entry_(){
     if [[ -n "$2" ]]; then
-        printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "$1:" "$2"
+        printf "${COLOR_ENTRY}%-*s${COLOR_RESET} %s\n" ${WIDTH_ENTRY} "$1:" "$2"
     else
-        error_ "entr_: Missing arguments."
+        error_ "entry_: Missing arguments."
     fi
 }
 

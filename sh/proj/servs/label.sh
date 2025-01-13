@@ -1,4 +1,5 @@
 function label_ {
+    PROJ_DEPS
     local proj_="$1"
     local action="$2"
 
@@ -36,9 +37,9 @@ function list_label {
     local endpoint_=$(get_api "$prov_" ".labels.list.endpoint") 
     local labels=$(call_api "$prov_" "GET" "${endpoint_//:repo/$repo_}")
 
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Project:" "$proj_"
-    printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Repo:" "$repo_"
-    line_
+    entry_ "Project" "$proj_"
+    entry_ "Repo" "$repo_"
+    double_
 
     if [[ -n "$labels" ]]; then
         echo "$labels" | jq -c '.[]' | while read -r label_json; do
@@ -47,9 +48,9 @@ function list_label {
             local label_description=$(echo "$label_json" | jq -r '.description // "No description."')
             local bg_color=$(bg_ $label_color)
 
-            printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Label:" "$label_name"
-            printf "${PRIMARY}%-*s${RESET} ${bg_color}${WHITE}#%s${RESET}\n" $LABEL_WIDTH "Color:" "${label_color}"
-            printf "${PRIMARY}%-*s${RESET} %s\n" $LABEL_WIDTH "Desc:" "$(fold_ "$label_description")"
+            entry_ "Label" "$label_name"
+            entry_bg "Color" -bg ${label_color} -fg "d0d0d0" -t ${label_color}
+            entry_ "Desc"  "$label_description"
             line_
         done
     else
@@ -134,14 +135,14 @@ function edit_label {
             local current_color=$(echo "$current_label" | jq -r '.color')
             local current_description=$(echo "$current_label" | jq -r '.description')
 
-            primary_ -c "Current Name:" -n "$label_name"
-            primary_ "New Name:"
+            primary_ -c "name:" -n "$label_name"
+            primary_ "new name:"
             input_ -e md -v new_name
             new_name=${new_name:-$label_name}
             line_
 
-            primary_ -c "Current Color:" -n "#$current_color"
-            primary_ -c "New color" -n "(name or hex without #):"
+            primary_ -c "color:" -n "#$current_color"
+            primary_ -c "new color" -n "(name or hex without #):"
             input_ -v color_input
             local new_color
             new_color=$(get_hex_ "$color_input")
@@ -150,7 +151,9 @@ function edit_label {
                 return 1
             fi
             line_
-            echo -e ${PRIMARY}"Current Description:${RESET} $current_description"
+            entry_ "desc" " " 
+            print_ "$current_description"
+            primary_ "new desc:"
             input_ -e md -v new_description
             new_description=${new_description:-$current_description}
 

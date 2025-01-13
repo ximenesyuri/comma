@@ -246,7 +246,11 @@ function list_ {
     fi
 }
 
-function fold_() {
+function fold_(){
+    echo "$1" | fold -s -w "$WIDTH_TEXT"
+}
+
+function fold_line_() {
     local line prefix
     while IFS= read -r line; do
         local indentation=$(echo "$line" | grep -o '^[[:space:]]*')
@@ -255,7 +259,7 @@ function fold_() {
         else
             prefix=$indentation
         fi
-        echo "$line" | fold -s -w "$TEXT_WIDTH" | sed "2,\$s/^/$prefix/"
+        echo "$line" | fold -s -w "$WIDTH_TEXT" | sed "2,\$s/^/$prefix/"
     done
 }
 
@@ -265,7 +269,7 @@ function print_() {
 
     if [[ "$PRINTER_" == "cat" ]]; then
         while IFS= read -r line; do
-            echo "$line" | fold_
+            echo "$line" | fold_line_
         done < "$temp" | sed 's/^/    | /'
     elif [[ "$PRINTER_" == "bat" ]]; then
         bat "$temp" --terminal-width=90 --wrap='auto' --style="numbers,grid"
@@ -291,3 +295,48 @@ function browser_() {
     fi
     "$BROWSER_" "$url"
 }
+
+function to_str_(){
+    if [[ -n "$2" ]]; then
+        echo "$1" | sed 's/\[ //g' | sed 's/\"//g' | sed 's/ \]//g' | sed "s/\'//g" | tr " " "$2"
+    else
+        echo "$1" | sed 's/\[ //g' | sed 's/\"//g' | sed 's/ \]//g' | sed "s/\'//g"
+    fi
+}
+
+function entry_bg {
+    local bg_color fg_color text
+
+    label="$1"
+    shift 1
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -b|-bg|--bg|--background)
+                bg_color="$2"
+                shift 2
+                ;;
+            -f|-fg|--fg|--foreground)
+                fg_color="$2"
+                shift 2
+                ;;
+            -t|--text)
+                text="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+    done
+
+    if [[ -z "$bg_color" || -z "$fg_color" || -z "$text" ]]; then
+        echo "Missing arguments."
+        return 1
+    fi
+
+    bg_color="${bg_color,,}"
+    fg_color="${fg_color,,}"
+    printf "${COLOR_ENTRY}%-*s${COLOR_RESET} $(bg_ "$bg_color")$(fg_ "$fg_color")#%s${COLOR_RESET}\n" $WIDTH_ENTRY "${label}:" "$text"
+}
+

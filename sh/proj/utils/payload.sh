@@ -32,16 +32,27 @@ function issue_payload {
     local payload
     case "$provider" in
         github)
-            case "$action" in
-                create) payload="{\"title\": \"$title\", \"body\": \"$body\", \"labels\": [$labels], \"assignee\": \"$assignee\"}" ;;
-                update) payload="{\"title\": \"$title\", \"body\": \"$body\", \"state\": \"$state\"}" ;;
-                *) payload="{}";;
-            esac
-            ;;
+        case "$action" in
+            create) 
+                payload=$(jq -n --arg title "$title" \
+                                --arg body "$body" \
+                                --argjson labels "$(echo $labels | jq -R 'split(",")')" \
+                                --arg assignee "$assignee" \
+                                '{title: $title, body: $body, labels: $labels, assignee: $assignee}')
+                ;;
+            update) 
+                payload=$(jq -n --arg title "$title" \
+                                --arg body "$body" \
+                                --arg state "$state" \
+                                '{title: $title, body: $body, state: $state}')
+                ;;
+            *) payload="{}" ;;
+        esac
+        ;; 
         gitlab|gitea|bitbucket)
             case "$action" in
-                create) payload="{\"title\": \"$title\", \"description\": \"$body\", \"labels\": \"$labels\", \"assignee\": \"$assignee\"}" ;;
-                update) payload="{\"title\": \"$title\", \"description\": \"$body\", \"state_event\": \"$state\"}" ;;
+                create) payload="{\"title\": \"$title\", \"description\": $body, \"labels\": \"$labels\", \"assignee\": \"$assignee\"}" ;;
+                update) payload="{\"title\": \"$title\", \"description\": $body, \"state_event\": \"$state\"}" ;;
                 *) payload="{}";;
             esac
             ;;
@@ -69,8 +80,8 @@ function pr_payload {
     case "$provider" in
         github)
             case "$action" in
-                create) payload="{\"title\": \"$title\", \"body\": \"$body\", \"base\": \"$base\", \"head\": \"$head\"}" ;;
-                update) payload="{\"title\": \"$title\", \"body\": \"$body\"}" ;;
+                create) payload="{\"title\": \"$title\", \"body\": $body, \"base\": \"$base\", \"head\": \"$head\"}" ;;
+                update) payload="{\"title\": \"$title\", \"body\": $body}" ;;
                 approve) payload="{\"event\": \"APPROVE\"}" ;;
                 disapprove) payload="{\"event\": \"REQUEST_CHANGES\"}" ;;
                 *) payload="{}";;
@@ -78,8 +89,8 @@ function pr_payload {
             ;;
         gitlab|gitea|bitbucket)
             case "$action" in
-                create) payload="{\"title\": \"$title\", \"description\": \"$body\", \"source_branch\": \"$head\", \"target_branch\": \"$base\"}" ;;
-                update) payload="{\"title\": \"$title\", \"description\": \"$body\"}" ;;
+                create) payload="{\"title\": \"$title\", \"description\": $body, \"source_branch\": \"$head\", \"target_branch\": \"$base\"}" ;;
+                update) payload="{\"title\": \"$title\", \"description\": $body}" ;;
                 *) payload="{}";;
             esac
             ;;

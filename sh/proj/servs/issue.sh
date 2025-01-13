@@ -144,7 +144,7 @@ function list_issues {
     entry_ "open" "$open_issues"
     entry_ "closed" "$closed_issues"
     entry_ "total" "$total_issues"
-    line_
+    double_
 
     echo "$issues_json" | jq -c '.[]' | while read -r issue; do
         local number=$(echo "$issue" | jq -r '.number')
@@ -216,7 +216,7 @@ function show_issue {
 
     entry_ "project" "$proj_"
     entry_ "repo" "$full_repo"
-    line_
+    double_
     entry_ "ID" "$number_"
     entry_ "url" "$url"
     line_
@@ -224,6 +224,7 @@ function show_issue {
     entry_ "author" "$author"
     entry_ "creation" "$created_at"
     entry_ "modif" "$updated_at"
+    line_
     entry_ "labels" "$labels"
     entry_ "assignee" "$assignee"
     entry_ "comments" "$comments_count"
@@ -318,8 +319,8 @@ function edit_issue {
         echo "No issue selected."
         return 1
     fi
-    local update_endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "update" "$number_")
-    local method_get=$(method_ "issues" "$prov_" "get")
+
+    local update_endpoint=$(endpoint_ "issue" "$prov_" "$repo_" "get" "$number_")
     local issue=$(call_api "$prov_" "$method_get" "$update_endpoint")
 
     if [[ $? -ne 0 || -z "$issue" || "$(echo "$issue" | jq -r '.message')" == "Not Found" ]]; then
@@ -329,31 +330,32 @@ function edit_issue {
 
     local current_title=$(echo "$issue" | jq -r '.title // "No Title"')
     local current_body=$(echo "$issue" | jq -r '.body // "No description available."')
-    local current_labels=$(echo "$issue" | jq -r '[.labels[]?.name] | join(", ") // "null"')
+    local current_labels=$(echo "$issue" | jq -r -c '.labels | map(.name) | @sh')
     local current_assignee=$(echo "$issue" | jq -r '.assignee?.login // ""')
 
-    primary -c "title:" -n "$current_title"
+    primary_ -c "title:" -n "$current_title"
     primary_ "new title:"
     input_ -v new_title
     new_title=${new_title:-$current_title}
 
     line_
-    primary -c "desc:" -n "$(fold_ "$current_body")"
+    primary_ "desc:"
+    print_ "$current_body"
     primary_ "new desc:"
     input_ -e md -v new_body
     new_body=${new_body:-$current_body}
 
     line_
-    primary -c "labels:" -n "$current_labels"
+    primary_ -c "labels:" -n "$(to_str_ "$current_labels")"
     primary_ "new labels:"
-
+    
     local labels=$(fetch_labels "$repo_" "$prov_")
     local label_names=$(echo "$labels" | jq -r '.[].name')
-    local selected_labels=$(echo "$label_names" | fzf --multi $FZF_GEOMETRY)
+    local selected_labels=$(to_str_ "$label_names" | fzf --multi $FZF_GEOMETRY)
     local selected_labels_json=$(echo "$selected_labels" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 
     line_
-    primary -c "assignee:" -n "$current_assignee"
+    primary_ -c "assignee:" -n "$current_assignee"
     primary_ -c "assignee:" -n "(blank to unassign)"
     input_ -v new_assignee
 
